@@ -3,3 +3,9 @@
 # local-only, never commit
 docs/
 CLAUDE.local.md
+
+# Claude Code-created worktrees (herdr drives worktrees here; this is insurance)
+.claude/worktrees/
+
+# Private: files/dirs under .claude/ prefixed with "_" stay out of version control
+.claude/**/_*
