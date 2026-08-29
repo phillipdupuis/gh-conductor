@@ -1,0 +1,15 @@
+{
+  "name": "gh-conductor",
+  "description": "Claude Code plugin marketplace for gh-conductor: a project manager for coding agents, backed by GitHub Issues.",
+  "owner": {
+    "name": "Phillip Dupuis",
+    "url": "https://github.com/phillipdupuis"
+  },
+  "plugins": [
+    {
+      "name": "gh-conductor",
+      "description": "Breaks a large feature into GitHub Issues, wires them as a DAG with sub-issues and blocked-by dependencies, and keeps agents and humans pointed at the next ready step.",
+      "source": "./plugins/gh-conductor"
+    }
+  ]
+}
