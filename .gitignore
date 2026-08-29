@@ -2,10 +2,13 @@
 
 # local-only, never commit
 docs/
-CLAUDE.local.md
 
 # Claude Code-created worktrees (herdr drives worktrees here; this is insurance)
 .claude/worktrees/
 
-# Private: files/dirs under .claude/ prefixed with "_" stay out of version control
-.claude/**/_*
+# Local-only files, industry-standard .local convention (CLAUDE.local.md, settings.local.json, .env.local)
+*.local
+*.local.*
+
+# Phillip's personal skills/agents/notes — local-only, easy to spot and invoke (/pdupuis-foo)
+pdupuis-*
