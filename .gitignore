@@ -1,4 +1,5 @@
 .DS_Store
 
-# local-only working notes, not for publication
+# local-only, never commit
 docs/
+CLAUDE.local.md
