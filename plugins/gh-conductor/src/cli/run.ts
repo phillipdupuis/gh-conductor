@@ -3,7 +3,7 @@
 import { parseArgs } from "node:util";
 import { parseEpicRef } from "../core/args.ts";
 import { categorize, readyNodes } from "../core/graph.ts";
-import { Graph } from "../core/schema.ts";
+import { Graph, type Issue } from "../core/schema.ts";
 import { loadGraph, resolveRepo, type Repo } from "../github/github.ts";
 import { toDot } from "../layout/dot.ts";
 import { DEFAULT_PORT, serve } from "../server/main.ts";
@@ -20,7 +20,8 @@ owner/repo#N forms set the repo; otherwise --repo, $GH_REPO, or the current dire
 --from reads a graph saved by \`conductor graph <epic> --json\` (or a fixture) instead of GitHub.
 
 commands:
-  graph   <epic>   every sub-issue with state, assignees, blockers, linked PR (--dot for Graphviz source)
+  graph   <epic>   every sub-issue, plus the issues one blocked-by hop away, with state, assignees,
+                   blockers and linked PR (--dot for Graphviz source)
   ready   <epic>   open sub-issues whose blockers are all closed (add --include-assigned to keep human-assigned ones)
   status  <epic>   ready / in progress / in review / assigned / blocked / done
   view    <epic>   open the epic's graph in the browser (starts the local server if needed); prints the URL.
@@ -107,8 +108,8 @@ export async function main(argv: string[]): Promise<number> {
     }
     case "status": {
       if (values.json) {
-        const nodes = graph.nodes.map((n) => ({ ...n, category: categorize(n, graph) }));
-        console.log(JSON.stringify({ epic: graph.epic, nodes }, null, 2));
+        const withCategory = (ns: Issue[]) => ns.map((n) => ({ ...n, category: categorize(n, graph) }));
+        console.log(JSON.stringify({ epic: graph.epic, nodes: withCategory(graph.nodes), related: withCategory(graph.related) }, null, 2));
       } else {
         console.log(renderStatus(graph));
       }

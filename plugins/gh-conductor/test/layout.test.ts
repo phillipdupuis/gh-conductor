@@ -18,13 +18,13 @@ describe("layoutGraph (upgrade-python-mid, everything collapsed)", () => {
 
   test("one node per layer: plain issues for singletons, one list node otherwise", () => {
     expect(boxes.length).toBe(layers.length);
-    expect(layout.layers.filter((l) => l.mode === "collapsed").map((l) => l.issues.length)).toEqual([2, 10]);
+    expect(layout.layers.filter((l) => l.mode === "collapsed").map((l) => l.issues.length)).toEqual([2, 2, 10]);
     expect(layout.layers.every((l) => l.toggle === null)).toBe(true);
   });
-  test("rows are stacked top-down at GAP_Y pitch, the epic at y = 0", () => {
+  test("rows are stacked top-down at GAP_Y pitch, the last thing to finish at y = 0", () => {
     const top = layout.layers[layout.layers.length - 1]!;
     expect(top.y).toBe(0);
-    expect(top.issues).toEqual([k(120)]);
+    expect(top.issues).toEqual([k(145)]);
     for (let i = layers.length - 1; i > 0; i--) {
       const above = layout.layers[i]!;
       const below = layout.layers[i - 1]!;
@@ -49,6 +49,9 @@ describe("layoutGraph (upgrade-python-mid, everything collapsed)", () => {
     expect(fanIn.pairs.length).toBe(10);
     const up = layout.edges.find((e) => e.source.startsWith("layer-") && e.target === k(130))!;
     expect(up.kind).toBe("tree");
+    // A related node is an edge endpoint like any other: #141 blocks it, so it hangs off the top.
+    const blockee = layout.edges.find((e) => e.source === k(141) && e.target === k(145))!;
+    expect(blockee.kind).toBe("blocking");
     expect(layout.edges.every((e) => e.source !== e.target)).toBe(true);
   });
 });
@@ -111,7 +114,7 @@ describe("boundsOf", () => {
   test("bounds of a real layout start at the epic row's top edge", () => {
     const real = layoutGraph(g, layers, new Set());
     const b = boundsOf(real);
-    expect(b.minY).toBe(0); // the epic row sits at y = 0
+    expect(b.minY).toBe(0); // the topmost row sits at y = 0
     expect(b.maxX - b.minX).toBe(LAYER_WIDTH); // the widest thing when collapsed is a list node
     const bottom = real.layers[0]!;
     expect(b.maxY).toBe(bottom.y + bottom.height);

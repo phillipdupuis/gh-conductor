@@ -183,10 +183,10 @@
           "state": "open"
         },
         {
-          "repo": "northbeam/platform",
+          "repo": "northbeam/devops",
           "number": 57,
           "title": "Add uv to platform",
-          "url": "https://github.com/northbeam/platform/issues/57",
+          "url": "https://github.com/northbeam/devops/issues/57",
           "state": "open"
         }
       ],
@@ -440,5 +440,40 @@
       "updatedAt": "2026-08-02T09:09:00.000Z"
     }
   ],
-  "related": []
+  "related": [
+    {
+      "repo": "northbeam/devops",
+      "number": 57,
+      "title": "Add uv to platform",
+      "url": "https://github.com/northbeam/devops/issues/57",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [],
+      "pr": null,
+      "parent": null,
+      "depth": 0,
+      "updatedAt": "2026-07-31T21:33:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 145,
+      "title": "Update public docs for the new Python",
+      "url": "https://github.com/northbeam/platform/issues/145",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 141,
+          "title": "Retire old Python runtime (base images, CI matrix, compat shims)",
+          "url": "https://github.com/northbeam/platform/issues/141",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": null,
+      "depth": 0,
+      "updatedAt": "2026-08-04T13:05:00.000Z"
+    }
+  ]
 }

@@ -22,7 +22,8 @@ function header(g: Graph): string {
 
 export function renderGraph(g: Graph): string {
   const out = [header(g)];
-  for (const n of g.nodes) out.push(`${"  ".repeat(n.depth)}[${categorize(n, g)}] ${line(n, g, "")}`);
+  // The tree first, indented by depth; then the issues one blocked-by hop off it, unindented.
+  for (const n of [...g.nodes, ...g.related]) out.push(`${"  ".repeat(n.depth)}[${categorize(n, g)}] ${line(n, g, "")}`);
   return out.join("\n");
 }
 

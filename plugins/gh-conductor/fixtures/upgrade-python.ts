@@ -10,9 +10,11 @@ export const STAGES: Stage[] = ["early", "mid", "late"];
 const REPO = "northbeam/platform";
 const VIEWER = "phillipdupuis";
 const EPIC = 120;
-/** Devops-sprint issue outside the epic's tree: the upgrade switches pip → uv, so no code starts until it ships. */
+/** Devops-sprint issue in another repo: the upgrade switches pip → uv, so no code starts until it ships. */
 const UV = 57;
-const UV_REPO = REPO;
+const UV_REPO = "northbeam/devops";
+/** Downstream of the whole epic: nothing in the tree waits on it, it waits on the last tree node. */
+const DOCS = 145;
 
 const repoOf = (n: number): string => (n === UV ? UV_REPO : REPO);
 const key = (n: number): string => `${repoOf(n)}#${n}`;
@@ -36,7 +38,15 @@ const SPECS: Spec[] = [
   { number: 141, title: "Retire old Python runtime (base images, CI matrix, compat shims)", parent: EPIC, blockedBy: [130] },
 ];
 
-const TITLES: Record<number, string> = { [EPIC]: "Upgrade Python version", [UV]: "Add uv to platform", ...Object.fromEntries(SPECS.map((s) => [s.number, s.title])) };
+/** Reached from the tree by one blocked-by hop, in either direction; neither is a sub-issue of the epic. */
+const RELATED: { number: number; blockedBy?: number[] }[] = [{ number: UV }, { number: DOCS, blockedBy: [141] }];
+
+const TITLES: Record<number, string> = {
+  [EPIC]: "Upgrade Python version",
+  [UV]: "Add uv to platform",
+  [DOCS]: "Update public docs for the new Python",
+  ...Object.fromEntries(SPECS.map((s) => [s.number, s.title])),
+};
 
 /** Per-issue state at each stage. Anything not listed is open, unassigned, no PR. */
 type Status = { state?: IssueState; assignees?: string[]; pr?: Pr };
@@ -110,6 +120,19 @@ export function upgradePython(stage: Stage): Graph {
     depth: depth(s),
     updatedAt: updatedAt(s.number, stage),
   });
+  const related = (r: (typeof RELATED)[number]): Issue => ({
+    repo: repoOf(r.number),
+    number: r.number,
+    title: TITLES[r.number]!,
+    url: url(r.number),
+    state: stateOf(r.number),
+    assignees: status[r.number]?.assignees ?? [],
+    blockedBy: (r.blockedBy ?? []).map(blocker),
+    pr: status[r.number]?.pr ?? null,
+    parent: null,
+    depth: 0,
+    updatedAt: updatedAt(r.number, stage),
+  });
   // Depth-first in sub-issue order, as loadGraph would return it.
   const byParent = new Map<number, Spec[]>();
   for (const s of SPECS) byParent.set(s.parent, [...(byParent.get(s.parent) ?? []), s]);
@@ -119,7 +142,7 @@ export function upgradePython(stage: Stage): Graph {
     viewer: VIEWER,
     epic: { repo: REPO, number: EPIC, title: TITLES[EPIC]!, url: url(EPIC), state: "open", assignees: [], blockedBy: [], pr: null, parent: null, depth: 0, updatedAt: updatedAt(EPIC, stage) },
     nodes: walk(EPIC),
-    related: [],
+    related: [...RELATED].sort((a, b) => key(a.number).localeCompare(key(b.number))).map(related),
   };
 }
 

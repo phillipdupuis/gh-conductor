@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { categorize, keyOf, readyNodes, refLabel, relativeTime, summarizePrs, type Blocker, type Graph, type Issue } from "../src/core/graph.ts";
+import { categorize, childrenOf, groupByCategory, keyOf, readyNodes, refLabel, relativeTime, summarizePrs, type Blocker, type Graph, type Issue } from "../src/core/graph.ts";
 
 const REPO = "o/r";
 export const k = (n: number, repo = REPO) => `${repo}#${n}`;
@@ -69,6 +69,21 @@ describe("readyNodes", () => {
   });
   test("--include-assigned keeps human-assigned issues", () => {
     expect(readyNodes(g, { includeAssigned: true }).map((n) => n.number)).toEqual([2, 4, 6]);
+  });
+});
+
+describe("related", () => {
+  const g = graph([node({ number: 2 })], {
+    related: [node({ number: 9, parent: null, depth: 0 }), node({ number: 10, parent: null, depth: 0, blockedBy: [blocker(11, "open", "other/repo")] })],
+  });
+  test("never ready work, never in a status section, never anybody's sub-issue", () => {
+    expect(readyNodes(g).map(keyOf)).toEqual([k(2)]);
+    expect(Object.values(groupByCategory(g)).flat().map(keyOf)).toEqual([k(2)]);
+    expect([...childrenOf(g).values()].flat().map(keyOf)).toEqual([k(2)]);
+  });
+  test("its own fetched blockers decide its category, even ones the graph never draws", () => {
+    expect(categorize(g.related[0]!, g)).toBe("ready");
+    expect(categorize(g.related[1]!, g)).toBe("blocked");
   });
 });
 

@@ -86,6 +86,18 @@ export const RawRef = z.object({
 });
 export type RawRef = z.infer<typeof RawRef>;
 
+/**
+ * An issue on the other end of one blocked-by hop, fetched in full so it can be drawn as a node.
+ * Its own `blockedBy` is one level deep and stops there: those refs are links, never boxes.
+ */
+export const RawDep = RawRef.extend({
+  updatedAt: z.string(),
+  assignees: z.object({ nodes: z.array(z.object({ login: z.string() })) }),
+  closedByPullRequestsReferences: z.object({ nodes: z.array(RawPr) }),
+  blockedBy: z.object({ nodes: z.array(RawRef) }),
+});
+export type RawDep = z.infer<typeof RawDep>;
+
 export const RawIssue = z.object({
   number: z.number().int(),
   title: z.string(),
@@ -93,7 +105,8 @@ export const RawIssue = z.object({
   state: GhState,
   repository: RawRepository,
   assignees: z.object({ nodes: z.array(z.object({ login: z.string() })) }),
-  blockedBy: z.object({ nodes: z.array(RawRef) }),
+  blockedBy: z.object({ nodes: z.array(RawDep) }),
+  blocking: z.object({ nodes: z.array(RawDep) }),
   updatedAt: z.string(),
   closedByPullRequestsReferences: z.object({ nodes: z.array(RawPr) }),
   subIssuesSummary: z.object({ total: z.number().int() }),

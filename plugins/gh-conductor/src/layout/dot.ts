@@ -1,16 +1,17 @@
 // Graph → Graphviz DOT. Pure; no I/O. `conductor graph --dot` prints this for humans and external
 // tools; the app lays itself out (src/core/layout.ts) and does not use it.
 //
-// Shape: the epic is the root node at the top and the sink of the graph — the last thing to
-// complete. Every edge means "must finish before" and points upward (rankdir=BT): explicit blocking
+// Shape: the epic sits near the top, the sink of its own tree — the last of that work to complete.
+// Every edge means "must finish before" and points upward (rankdir=BT): explicit blocking
 // (blocker → blocked, bold) and containment (sub-issue → parent, muted — a parent is implicitly
 // blocked by its children). Bottom-to-top reads as time; the final pieces of work point at the epic.
-// Blockers outside the epic's tree are not drawn; the blocked node's tooltip names them.
+// Dependency-reached issues are drawn like any other node; a reference to something the graph does
+// not draw is not an edge, and the referring node's tooltip names it "(not shown)".
 //
 // Styling rule: status is the fill color and nothing else. Every work node has the same border, every
 // blocking edge the same stroke; the epic node is neutral because it is not a work item. A node is
-// just "#N title": assignee, PR, and age live in the page's sidebar and in the node tooltip, never in
-// shape or line style.
+// just its ref and title: assignee, PR, and age live in the page's sidebar and in the node tooltip,
+// never in shape or line style.
 
 import { NODE_HEIGHT, NODE_WIDTH } from "../core/constants.ts";
 import { blockedByText, categorize, keyOf, refLabel, type Category, type Graph, type Issue } from "../core/graph.ts";

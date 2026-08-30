@@ -25,17 +25,23 @@ describe("layersOf (upgrade-python-mid)", () => {
     expect(new Set(migrations.map((n) => at.get(n))).size).toBe(1);
     expect(layers[at.get(k(131))!]).toEqual(migrations);
   });
-  test("the epic is alone in the top layer", () => {
-    expect(layers[layers.length - 1]).toEqual([k(120)]);
+  test("the epic is alone in its layer, under the work that waits on the whole epic", () => {
+    expect(layers[layers.length - 1]).toEqual([k(145)]);
+    expect(layers[layers.length - 2]).toEqual([k(120)]);
   });
   test("every issue is in exactly one layer, in graph order", () => {
-    expect(layers.flat().sort()).toEqual([k(120), ...g.nodes.map(keyOf)].sort());
-    const order = new Map([g.epic, ...g.nodes].map((n, i) => [keyOf(n), i]));
+    expect(layers.flat().sort()).toEqual([k(120), ...g.nodes.map(keyOf), ...g.related.map(keyOf)].sort());
+    const order = new Map([g.epic, ...g.nodes, ...g.related].map((n, i) => [keyOf(n), i]));
     for (const layer of layers) expect([...layer].sort((a, b) => order.get(a)! - order.get(b)!)).toEqual(layer);
   });
-  test("blockers outside the graph are ignored", () => {
-    // #129 is blocked by #57, which is not in the epic; it still layers right above #125.
-    expect(at.get(k(129))).toBe(at.get(k(125))! + 1);
+  test("a blocker in another repo lands in the bottom band and pushes what it blocks up", () => {
+    // #129 is blocked by devops#57 as well as by #125; nothing blocks #57 itself.
+    expect(at.get(k(57, "northbeam/devops"))).toBe(0);
+    expect(at.get(k(129))!).toBeGreaterThan(at.get(k(125))!);
+    expect(at.get(k(129))!).toBeGreaterThan(at.get(k(57, "northbeam/devops"))!);
+  });
+  test("a related issue nothing here waits on bands one above the epic", () => {
+    expect(at.get(k(145))).toBe(at.get(k(120))! + 1);
   });
 });
 
