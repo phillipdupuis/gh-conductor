@@ -1,9 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { App } from "./App.tsx";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { RouterProvider } from "@tanstack/react-router";
+import { router } from "./router.tsx";
 
-createRoot(document.getElementById("root")!).render(
-  <TooltipProvider delayDuration={300}>
-    <App />
-  </TooltipProvider>,
-);
+createRoot(document.getElementById("root")!).render(<RouterProvider router={router} />);

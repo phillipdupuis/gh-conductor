@@ -1,47 +1,32 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { fetchView, parseEpicPath, ping } from "./api.ts";
+import { useEffect, useMemo } from "react";
+import { currentView, useAppStore } from "./store.ts";
 import { categorize } from "../core/graph.ts";
 import { layersOf } from "../core/layers.ts";
-import { isCollapsible, layoutGraph } from "../core/layout.ts";
-import type { Category, Issue, ViewModel } from "../core/schema.ts";
+import { layoutGraph } from "../core/layout.ts";
+import type { Category, Issue } from "../core/schema.ts";
 import { adjacency, trace, type Trace } from "../core/trace.ts";
 import { GraphCanvas } from "./components/GraphCanvas.tsx";
 import { Header } from "./components/Header.tsx";
 import { IssueSheet } from "./components/IssueSheet.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
 
-type Load = { status: "idle" } | { status: "loading"; prev: ViewModel | null } | { status: "ready"; view: ViewModel } | { status: "error"; message: string; prev: ViewModel | null };
-
 type Layers = { layers: number[][]; error: null } | { layers: null; error: string };
 
 export function App() {
-  const epic = useMemo(() => parseEpicPath(location.pathname), []);
-  const [load, setLoad] = useState<Load>({ status: "idle" });
-  const [hover, setHover] = useState<number | null>(null);
-  const [selected, setSelected] = useState<number | null>(null);
-  /** Layer indices shown as columns instead of one list node. Survives Refresh. */
-  const [expanded, setExpanded] = useState<ReadonlySet<number>>(() => new Set());
+  const epic = useAppStore((s) => s.epic);
+  const load = useAppStore((s) => s.load);
+  const hover = useAppStore((s) => s.hover);
+  const selected = useAppStore((s) => s.selected);
+  const expanded = useAppStore((s) => s.expanded);
+  const view = useAppStore(currentView);
 
-  const view = load.status === "ready" ? load.view : load.status === "loading" || load.status === "error" ? load.prev : null;
-
-  const refresh = useCallback(async () => {
-    if (!epic) return;
-    setLoad((l) => ({ status: "loading", prev: l.status === "ready" ? l.view : l.status === "loading" || l.status === "error" ? l.prev : null }));
-    try {
-      setLoad({ status: "ready", view: await fetchView(epic) });
-    } catch (err) {
-      setLoad((l) => ({ status: "error", message: err instanceof Error ? err.message : String(err), prev: l.status === "loading" ? l.prev : null }));
-    }
-  }, [epic]);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  useEffect(() => {
-    const id = setInterval(() => void ping(), 60_000);
-    return () => clearInterval(id);
-  }, []);
+  const refresh = useAppStore((s) => s.refresh);
+  const setHover = useAppStore((s) => s.setHover);
+  const setSelected = useAppStore((s) => s.setSelected);
+  const expand = useAppStore((s) => s.expand);
+  const collapse = useAppStore((s) => s.collapse);
+  const expandAll = useAppStore((s) => s.expandAll);
+  const collapseAll = useAppStore((s) => s.collapseAll);
 
   useEffect(() => {
     if (view) document.title = `#${view.graph.epic.number} ${view.graph.epic.title} · gh-conductor`;
@@ -77,32 +62,8 @@ export function App() {
   const layers = layered?.layers ?? null;
   const layout = useMemo(() => (view && layers ? layoutGraph(view.graph, layers, expanded) : null), [view, layers, expanded]);
 
-  const expand = useCallback((i: number) => setExpanded((s) => new Set(s).add(i)), []);
-  const collapse = useCallback(
-    (i: number) =>
-      setExpanded((s) => {
-        const next = new Set(s);
-        next.delete(i);
-        return next;
-      }),
-    [],
-  );
-  const expandAll = useCallback(() => setExpanded(new Set((layers ?? []).flatMap((l, i) => (isCollapsible(l) ? [i] : [])))), [layers]);
-  const collapseAll = useCallback(() => setExpanded(new Set()), []);
-
-  if (!epic) {
-    return (
-      <main className="flex h-full items-center justify-center p-8">
-        <div className="max-w-md space-y-3 text-sm text-muted-foreground">
-          <h1 className="text-lg font-semibold text-foreground">gh-conductor</h1>
-          <p>
-            Open an epic with <code className="rounded bg-muted px-1 py-0.5">conductor view &lt;epic&gt;</code>, or visit{" "}
-            <code className="rounded bg-muted px-1 py-0.5">/&lt;owner&gt;/&lt;repo&gt;/&lt;number&gt;</code>.
-          </p>
-        </div>
-      </main>
-    );
-  }
+  // The route loader sets the epic before this ever renders; the guard only narrows the type.
+  if (!epic) return null;
 
   return (
     <div className="flex h-full flex-col">

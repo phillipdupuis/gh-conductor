@@ -5,10 +5,10 @@ import { Health, ViewModel } from "../core/schema.ts";
 
 export type EpicPath = { owner: string; repo: string; number: number };
 
-/** `/owner/repo/123` → parts; anything else → null. */
-export function parseEpicPath(pathname: string): EpicPath | null {
-  const m = pathname.match(/^\/([^/]+)\/([^/]+)\/(\d+)\/?$/);
-  return m ? { owner: m[1]!, repo: m[2]!, number: Number(m[3]) } : null;
+/** Raw route params → EpicPath; `false` rejects the match (router falls through to not-found). */
+export function parseEpicParams(p: { owner: string; repo: string; number: string }): EpicPath | false {
+  if (!/^\d+$/.test(p.number)) return false;
+  return { owner: p.owner, repo: p.repo, number: Number(p.number) };
 }
 
 export async function fetchView(p: EpicPath): Promise<ViewModel> {
