@@ -109,7 +109,6 @@ export function App() {
       <Header
         epic={epic}
         view={view}
-        categories={categories}
         layers={layers}
         expanded={expanded}
         loading={load.status === "loading"}
@@ -131,7 +130,7 @@ export function App() {
         )}
         {!view && load.status === "loading" && <p className="m-auto text-sm text-muted-foreground">Loading #{epic.number} from GitHub…</p>}
       </div>
-      {view && <IssueSheet issue={selected !== null ? (issues.get(selected) ?? null) : null} graph={view.graph} categories={categories} onClose={() => setSelected(null)} onSelect={setSelected} />}
+      {view && <IssueSheet issue={selected !== null ? (issues.get(selected) ?? null) : null} graph={view.graph} onClose={() => setSelected(null)} onSelect={setSelected} />}
     </div>
   );
 }

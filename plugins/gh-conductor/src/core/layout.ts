@@ -57,6 +57,27 @@ export type Layout = { issues: IssuePlacement[]; layers: LayerPlacement[]; edges
 /** Node id of a collapsed layer. */
 export const layerId = (layer: number) => `layer-${layer}`;
 
+/**
+ * The bounding box of everything a layout places — issue placements and each layer's list node,
+ * frame and toggle. In layout px, so the viewport can be sized and anchored without measuring the
+ * DOM. A layout that places nothing has zero bounds.
+ */
+export function boundsOf(layout: Layout): { minX: number; minY: number; maxX: number; maxY: number } {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  const cover = (b: Box) => {
+    if (b.x < minX) minX = b.x;
+    if (b.y < minY) minY = b.y;
+    if (b.x + b.width > maxX) maxX = b.x + b.width;
+    if (b.y + b.height > maxY) maxY = b.y + b.height;
+  };
+  for (const p of layout.issues) cover(p);
+  for (const l of layout.layers) for (const b of [l.node, l.frame, l.toggle]) if (b) cover(b);
+  return minX === Infinity ? { minX: 0, minY: 0, maxX: 0, maxY: 0 } : { minX, minY, maxX, maxY };
+}
+
 export const isCollapsible = (layer: number[]) => layer.length > COLLAPSE_THRESHOLD;
 
 export function layerMode(layer: number[], index: number, expanded: ReadonlySet<number>): LayerMode {

@@ -1,17 +1,14 @@
 import { ExternalLink, FoldHorizontal, RefreshCw, UnfoldHorizontal } from "lucide-react";
 import type { EpicPath } from "../api.ts";
-import { CATEGORY_LABEL, ORDER } from "../lib/categories.ts";
 import { relativeTime } from "../../core/graph.ts";
 import { isCollapsible } from "../../core/layout.ts";
-import type { Category, ViewModel } from "../../core/schema.ts";
-import { StatusIcon } from "./StatusIcon.tsx";
+import type { ViewModel } from "../../core/schema.ts";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type Props = {
   epic: EpicPath;
   view: ViewModel | null;
-  categories: Map<number, Category>;
   layers: number[][] | null;
   expanded: ReadonlySet<number>;
   loading: boolean;
@@ -21,11 +18,9 @@ type Props = {
   onCollapseAll: () => void;
 };
 
-export function Header({ epic, view, categories, layers, expanded, loading, error, onRefresh, onExpandAll, onCollapseAll }: Props) {
-  const counts = new Map<Category, number>();
-  for (const c of categories.values()) counts.set(c, (counts.get(c) ?? 0) + 1);
+export function Header({ epic, view, layers, expanded, loading, error, onRefresh, onExpandAll, onCollapseAll }: Props) {
   const total = view?.graph.nodes.length ?? 0;
-  const done = counts.get("done") ?? 0;
+  const done = view?.graph.nodes.filter((n) => n.state === "closed").length ?? 0;
   const collapsible = (layers ?? []).flatMap((l, i) => (isCollapsible(l) ? [i] : []));
   const allExpanded = collapsible.every((i) => expanded.has(i));
   const noneExpanded = !collapsible.some((i) => expanded.has(i));
@@ -55,14 +50,6 @@ export function Header({ epic, view, categories, layers, expanded, loading, erro
           {error && <span className="ml-2 text-destructive">error: {error}</span>}
         </p>
       </div>
-      <ul className="hidden items-center gap-1.5 text-xs md:flex">
-        {ORDER.map((c) => (
-          <li key={c} className={cn("flex items-center gap-1.5 rounded-full border px-2 py-0.5", (counts.get(c) ?? 0) === 0 && "opacity-40")}>
-            <StatusIcon category={c} />
-            {CATEGORY_LABEL[c]} <span className="tabular-nums text-muted-foreground">{counts.get(c) ?? 0}</span>
-          </li>
-        ))}
-      </ul>
       {collapsible.length > 0 && (
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="sm" onClick={onExpandAll} disabled={allExpanded}>

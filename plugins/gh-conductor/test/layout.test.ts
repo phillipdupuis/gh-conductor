@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { GAP_Y, LAYER_WIDTH, MAX_VISIBLE_ROWS, NODE_HEIGHT, NODE_WIDTH, ROW_HEIGHT } from "../src/core/constants.ts";
 import { layersOf } from "../src/core/layers.ts";
-import { layoutGraph, type Box } from "../src/core/layout.ts";
+import { boundsOf, layoutGraph, type Box, type Layout, type LayerPlacement } from "../src/core/layout.ts";
 import { Graph } from "../src/core/schema.ts";
 import mid from "../fixtures/upgrade-python-mid.json";
 
@@ -76,5 +76,42 @@ describe("layoutGraph (expanded)", () => {
   });
   test("edges fan out to the individual issues", () => {
     expect(layout.edges.filter((e) => e.source === "129" && e.kind === "blocking").length).toBe(10);
+  });
+});
+
+describe("boundsOf", () => {
+  const row = (p: Partial<LayerPlacement>): LayerPlacement => ({ layer: 0, issues: [], mode: "single", y: 0, height: 0, node: null, frame: null, toggle: null, ...p });
+
+  test("covers every placed box: issue, list node, frame and toggle", () => {
+    // Each box owns exactly one extreme, so dropping any one of the four sources changes the answer.
+    const layout: Layout = {
+      issues: [{ number: 1, layer: 0, x: 300, y: 100, width: 220, height: 56 }], // maxX = 520
+      layers: [
+        row({ layer: 0, node: { x: -180, y: 300, width: 360, height: 120 } }), // maxY = 420
+        row({ layer: 1, frame: { x: -260, y: 0, width: 520, height: 80 }, toggle: { x: -48, y: -22, width: 96, height: 28 } }), // minX = -260, minY = -22
+      ],
+      edges: [],
+    };
+    expect(boundsOf(layout)).toEqual({ minX: -260, minY: -22, maxX: 520, maxY: 420 });
+  });
+
+  test("a layout that places nothing has zero bounds", () => {
+    expect(boundsOf({ issues: [], layers: [], edges: [] })).toEqual({ minX: 0, minY: 0, maxX: 0, maxY: 0 });
+    // Rows exist but place no boxes (every single-mode row is its issues, and there are none).
+    expect(boundsOf({ issues: [], layers: [row({}), row({ layer: 1 })], edges: [] })).toEqual({ minX: 0, minY: 0, maxX: 0, maxY: 0 });
+  });
+
+  test("a single box's bounds are the box itself", () => {
+    const layout: Layout = { issues: [{ number: 7, layer: 0, x: -110, y: 64, width: 220, height: 56 }], layers: [], edges: [] };
+    expect(boundsOf(layout)).toEqual({ minX: -110, minY: 64, maxX: 110, maxY: 120 });
+  });
+
+  test("bounds of a real layout start at the epic row's top edge", () => {
+    const real = layoutGraph(g, layers, new Set());
+    const b = boundsOf(real);
+    expect(b.minY).toBe(0); // the epic row sits at y = 0
+    expect(b.maxX - b.minX).toBe(LAYER_WIDTH); // the widest thing when collapsed is a list node
+    const bottom = real.layers[0]!;
+    expect(b.maxY).toBe(bottom.y + bottom.height);
   });
 });

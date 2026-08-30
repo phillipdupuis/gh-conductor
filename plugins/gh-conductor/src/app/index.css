@@ -26,12 +26,13 @@
   --ring: #58a6ff;
   --radius: 0.5rem;
 
-  /* Status is the fill color and nothing else. */
-  --status-ready: #238636;
-  --status-in_progress: #1f6feb;
-  --status-waiting: #9e6a03;
-  --status-blocked: #30363d;
-  --status-done: #8957e5;
+  /* GitHub's own state colors (Primer dark). Status shows as octicon + border, never fill. */
+  --status-ready: #3fb950; /* open */
+  --status-in_progress: #8b949e; /* draft */
+  --status-waiting: #d29922; /* attention: a person has to act */
+  --status-blocked: #6e7681; /* neutral: nothing to do here */
+  --status-done: #a371f7; /* done */
+  --pr-closed: #f85149; /* a closed, unmerged PR */
   --edge: #8b949e;
   --tree: #30363d;
 }
@@ -95,4 +96,19 @@
 .react-flow__handle {
   opacity: 0;
   pointer-events: none;
+}
+
+/* Ready nodes: slow marching ants — motion = "this can move". */
+@keyframes ants {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+.ants {
+  animation: ants 2.4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ants {
+    animation: none;
+  }
 }

@@ -1,7 +1,8 @@
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { useState } from "react";
 import { blockedByText } from "../../core/graph.ts";
 import type { Category, Graph, Issue } from "../../core/schema.ts";
 import type { Trace } from "../../core/trace.ts";
-import { CATEGORY_LABEL, ORDER } from "../lib/categories.ts";
 import { StatusIcon } from "./StatusIcon.tsx";
 import { cn } from "@/lib/utils";
 
@@ -13,26 +14,68 @@ type Props = {
   onSelect: (n: number) => void;
 };
 
+/**
+ * One sidebar section per native GitHub fact. The "waiting" category lumps two unrelated facts —
+ * a pull request awaiting review, and an issue simply assigned to someone — so it is split here
+ * rather than shown under an invented label. A section list, not a core concept.
+ */
+type Section = { key: string; label: string; category: Category; match?: (issue: Issue) => boolean };
+
+const SECTIONS: Section[] = [
+  { key: "ready", label: "Ready", category: "ready" },
+  { key: "in_progress", label: "In progress", category: "in_progress" },
+  { key: "in_review", label: "In review", category: "waiting", match: (n) => n.pr?.state === "review" },
+  { key: "assigned", label: "Assigned", category: "waiting", match: (n) => n.pr?.state !== "review" },
+  { key: "blocked", label: "Blocked", category: "blocked" },
+  { key: "done", label: "Done", category: "done" },
+];
+
 export function Sidebar({ graph, categories, traced, onHover, onSelect }: Props) {
-  const groups = new Map<Category, Issue[]>(ORDER.map((c) => [c, []]));
-  for (const n of graph.nodes) groups.get(categories.get(n.number) ?? "blocked")!.push(n);
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set(["done"]));
+  const toggle = (key: string) =>
+    setCollapsed((s) => {
+      const next = new Set(s);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
+
+  const groups = new Map<string, Issue[]>(SECTIONS.map((s) => [s.key, []]));
+  for (const n of graph.nodes) {
+    const c = categories.get(n.number) ?? "blocked";
+    const section = SECTIONS.find((s) => s.category === c && (s.match?.(n) ?? true));
+    if (section) groups.get(section.key)!.push(n);
+  }
 
   return (
     <aside className="w-80 shrink-0 overflow-y-auto border-r bg-card text-sm">
-      {ORDER.map((c) => {
-        const items = groups.get(c)!;
+      {SECTIONS.map((s) => {
+        const items = groups.get(s.key)!;
         if (!items.length) return null;
+        const open = !collapsed.has(s.key);
+        const Chevron = open ? ChevronDown : ChevronRight;
         return (
-          <section key={c} className="border-b py-2 last:border-b-0">
-            <h2 className="flex items-center gap-2 px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <StatusIcon category={c} />
-              {CATEGORY_LABEL[c]} <span className="tabular-nums">{items.length}</span>
+          <section key={s.key} className="border-b py-2 last:border-b-0">
+            <h2>
+              <button
+                type="button"
+                onClick={() => toggle(s.key)}
+                aria-expanded={open}
+                className="flex w-full items-center gap-2 px-3 py-1 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:bg-accent"
+              >
+                {/* Sections only render non-empty, so the first issue refines the icon for free:
+                    a pull-request icon for "In review", a person for "Assigned". */}
+                <StatusIcon category={s.category} issue={items[0]} size={12} />
+                {s.label} <span className="tabular-nums">{items.length}</span>
+                <Chevron aria-hidden size={14} className="ml-auto shrink-0 text-muted-foreground" />
+              </button>
             </h2>
-            <ul>
-              {items.map((n) => (
-                <Row key={n.number} issue={n} graph={graph} traced={traced} onHover={onHover} onSelect={onSelect} />
-              ))}
-            </ul>
+            {open && (
+              <ul>
+                {items.map((n) => (
+                  <Row key={n.number} issue={n} graph={graph} traced={traced} onHover={onHover} onSelect={onSelect} />
+                ))}
+              </ul>
+            )}
           </section>
         );
       })}

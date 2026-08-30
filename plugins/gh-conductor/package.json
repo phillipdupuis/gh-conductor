@@ -14,6 +14,7 @@
     "serve": "bun --hot src/server/main.ts"
   },
   "dependencies": {
+    "@primer/octicons-react": "^19.33.0",
     "@xyflow/react": "^12.11.5",
     "bun-plugin-tailwind": "^0.1.2",
     "class-variance-authority": "^0.7.1",

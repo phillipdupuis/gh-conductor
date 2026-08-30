@@ -32,20 +32,28 @@ export function renderReady(nodes: Issue[], g: Graph): string {
   return nodes.map((n) => line(n, g, "")).join("\n");
 }
 
-const LABELS: Record<Category, string> = {
-  ready: "READY",
-  in_progress: "IN PROGRESS",
-  waiting: "WAITING ON A HUMAN",
-  blocked: "BLOCKED",
-  done: "DONE",
-};
+/**
+ * The page's sidebar sections, in plain GitHub/PM words. "waiting" covers two of them — a PR
+ * awaiting review and an issue simply assigned to someone — so it is split by `match`, exactly as
+ * src/app/components/Sidebar.tsx does.
+ */
+type Section = { key: string; label: string; category: Category; match?: (issue: Issue) => boolean };
+
+const SECTIONS: Section[] = [
+  { key: "ready", label: "READY", category: "ready" },
+  { key: "in_progress", label: "IN PROGRESS", category: "in_progress" },
+  { key: "in_review", label: "IN REVIEW", category: "waiting", match: (n) => n.pr?.state === "review" },
+  { key: "assigned", label: "ASSIGNED", category: "waiting", match: (n) => n.pr?.state !== "review" },
+  { key: "blocked", label: "BLOCKED", category: "blocked" },
+  { key: "done", label: "DONE", category: "done" },
+];
 
 export function renderStatus(g: Graph): string {
   const groups = groupByCategory(g);
   const out = [header(g), ""];
-  for (const cat of ["ready", "in_progress", "waiting", "blocked", "done"] as Category[]) {
-    const ns = groups[cat];
-    out.push(`${LABELS[cat]} (${ns.length})`);
+  for (const s of SECTIONS) {
+    const ns = s.match ? groups[s.category].filter(s.match) : groups[s.category];
+    out.push(`${s.label} (${ns.length})`);
     for (const n of ns) out.push(line(n, g));
     out.push("");
   }

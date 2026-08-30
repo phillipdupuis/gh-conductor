@@ -22,7 +22,7 @@ owner/repo#N forms set the repo; otherwise --repo, $GH_REPO, or the current dire
 commands:
   graph   <epic>   every sub-issue with state, assignees, blockers, linked PR (--dot for Graphviz source)
   ready   <epic>   open sub-issues whose blockers are all closed (add --include-assigned to keep human-assigned ones)
-  status  <epic>   ready / in progress / waiting on a human / blocked / done
+  status  <epic>   ready / in progress / in review / assigned / blocked / done
   view    <epic>   open the epic's graph in the browser (starts the local server if needed); prints the URL.
                    --no-open just prints.
   serve            run the graph server in the foreground (dev). --from serves a saved graph for any epic.
