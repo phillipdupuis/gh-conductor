@@ -13,7 +13,7 @@ bun src/cli/main.ts <command> <epic> [--repo owner/name] [--json]
 
 graph   <epic>   every sub-issue with state, assignees, blockers, linked PR (--dot for Graphviz source)
 ready   <epic>   open sub-issues whose blockers are all closed
-status  <epic>   ready / in progress / waiting on a human / blocked / done
+status  <epic>   ready / in progress / in review / assigned / blocked / done
 view    <epic>   open the epic's graph in the browser (starts the local server if needed)
 serve            run the graph server in the foreground; --from <graph.json> serves a saved graph
 ```

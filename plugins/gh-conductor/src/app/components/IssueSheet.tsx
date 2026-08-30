@@ -1,7 +1,8 @@
+import { IssueClosedIcon, IssueOpenedIcon } from "@primer/octicons-react";
 import { ExternalLink } from "lucide-react";
 import { childrenOf, relativeTime } from "../../core/graph.ts";
-import type { Category, Graph, Issue } from "../../core/schema.ts";
-import { CATEGORY_LABEL, STATUS_BG } from "../lib/categories.ts";
+import type { Graph, Issue } from "../../core/schema.ts";
+import { AvatarStack, PrChip } from "./StatusIcon.tsx";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -10,14 +11,12 @@ import { cn } from "@/lib/utils";
 type Props = {
   issue: Issue | null;
   graph: Graph;
-  categories: Map<number, Category>;
   onClose: () => void;
   onSelect: (n: number) => void;
 };
 
-export function IssueSheet({ issue, graph, categories, onClose, onSelect }: Props) {
+export function IssueSheet({ issue, graph, onClose, onSelect }: Props) {
   const isEpic = issue?.number === graph.epic.number;
-  const category = issue && !isEpic ? (categories.get(issue.number) ?? "blocked") : null;
   const inGraph = new Set([graph.epic.number, ...graph.nodes.map((n) => n.number)]);
   const blocks = issue ? graph.nodes.filter((n) => n.blockedBy.some((b) => b.number === issue.number)) : [];
   const children = issue ? (childrenOf(graph).get(issue.number) ?? []) : [];
@@ -47,19 +46,27 @@ export function IssueSheet({ issue, graph, categories, onClose, onSelect }: Prop
                 <span className="text-muted-foreground">#{issue.number}</span> {issue.title}
               </SheetTitle>
               <SheetDescription className="flex flex-wrap items-center gap-2">
-                {isEpic ? <Badge variant="outline">epic · {issue.state}</Badge> : <Badge className={cn("text-white", STATUS_BG[category!])}>{CATEGORY_LABEL[category!]}</Badge>}
+                <StatePill state={issue.state} />
+                {isEpic && <Badge variant="outline">epic</Badge>}
                 <span>updated {relativeTime(issue.updatedAt)}</span>
               </SheetDescription>
             </SheetHeader>
 
             <div className="min-w-0 space-y-5 px-4 text-sm">
               <Field label="Assignees">
-                {issue.assignees.length ? issue.assignees.map((a) => (a === graph.viewer ? `@${a} (you)` : `@${a}`)).join(", ") : <Empty>nobody</Empty>}
+                {issue.assignees.length ? (
+                  <span className="flex items-center gap-2">
+                    <AvatarStack logins={issue.assignees} max={5} />
+                    <span>{issue.assignees.map((a) => (a === graph.viewer ? `@${a} (you)` : `@${a}`)).join(", ")}</span>
+                  </span>
+                ) : (
+                  <Empty>nobody</Empty>
+                )}
               </Field>
               <Field label="Pull request">
                 {issue.pr ? (
-                  <a href={issue.pr.url} target="_blank" rel="noreferrer" className="hover:underline">
-                    #{issue.pr.number} <span className="text-muted-foreground">{issue.pr.state}</span>
+                  <a href={issue.pr.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 hover:underline">
+                    <PrChip pr={issue.pr} size={14} className="text-sm text-foreground" /> <span className="text-muted-foreground">{issue.pr.state}</span>
                   </a>
                 ) : (
                   <Empty>none</Empty>
@@ -82,6 +89,17 @@ export function IssueSheet({ issue, graph, categories, onClose, onSelect }: Prop
         )}
       </SheetContent>
     </Sheet>
+  );
+}
+
+/** The filled Open/Closed pill github.com puts at the top of an issue page, in Primer's own colors. */
+function StatePill({ state }: { state: Issue["state"] }) {
+  const open = state === "open";
+  const Icon = open ? IssueOpenedIcon : IssueClosedIcon;
+  return (
+    <Badge className="text-white" style={{ backgroundColor: open ? "#238636" : "#8957e5" }}>
+      <Icon aria-hidden size={12} fill="currentColor" /> {open ? "Open" : "Closed"}
+    </Badge>
   );
 }
 

@@ -1,6 +1,6 @@
-import { Background, Controls, MarkerType, MiniMap, Position, ReactFlow, type Edge, type NodeTypes } from "@xyflow/react";
-import { useMemo } from "react";
-import { layerId, type Box, type Layout } from "../../core/layout.ts";
+import { Background, Controls, MarkerType, MiniMap, Position, ReactFlow, type Edge, type NodeTypes, type ReactFlowInstance } from "@xyflow/react";
+import { useMemo, useRef } from "react";
+import { boundsOf, layerId, type Box, type Layout } from "../../core/layout.ts";
 import type { Category, Graph, Issue } from "../../core/schema.ts";
 import type { Trace } from "../../core/trace.ts";
 import { IssueNode, type IssueFlowNode } from "./IssueNode.tsx";
@@ -9,6 +9,22 @@ import { LayerNode, type LayerFlowNode } from "./LayerNode.tsx";
 import { LayerToggle, type LayerToggleFlowNode } from "./LayerToggle.tsx";
 
 const nodeTypes: NodeTypes = { issue: IssueNode, layer: LayerNode, layerFrame: LayerFrame, layerToggle: LayerToggle };
+
+/** Margin around the graph in the initial viewport, px. */
+const PAD = 24;
+
+/**
+ * The first viewport: horizontally centred, anchored to the top so the epic row is what you see,
+ * and never zoomed below 0.75 (9px text) even when the graph is far wider than the pane. Wide
+ * graphs are meant to be scrolled, not shrunk until unreadable.
+ */
+function initialViewport(width: number, layout: Layout) {
+  const b = boundsOf(layout);
+  const graphW = b.maxX - b.minX;
+  if (width <= 0 || graphW <= 0) return { x: 0, y: 0, zoom: 1 };
+  const zoom = Math.min(1, Math.max(0.75, (width - 2 * PAD) / graphW));
+  return { x: (width - graphW * zoom) / 2 - b.minX * zoom, y: PAD - b.minY * zoom, zoom };
+}
 
 type FlowNode = IssueFlowNode | LayerFlowNode | LayerFrameFlowNode | LayerToggleFlowNode;
 
@@ -23,12 +39,13 @@ type Props = {
   onCollapse: (layer: number) => void;
 };
 
+/** Primer dark state colors, for the minimap only (nodes use the CSS vars). */
 const STATUS_COLOR: Record<Category | "epic", string> = {
-  ready: "#238636",
-  in_progress: "#1f6feb",
-  waiting: "#9e6a03",
-  blocked: "#30363d",
-  done: "#8957e5",
+  ready: "#3fb950",
+  in_progress: "#8b949e",
+  waiting: "#d29922",
+  blocked: "#6e7681",
+  done: "#a371f7",
   epic: "#161b22",
 };
 
@@ -55,6 +72,7 @@ function placed(b: Box, withHandles: boolean) {
 }
 
 export function GraphCanvas({ graph, layout, categories, traced, onHover, onSelect, onExpand, onCollapse }: Props) {
+  const wrap = useRef<HTMLDivElement>(null);
   const issues = useMemo(() => new Map<number, Issue>([graph.epic, ...graph.nodes].map((n) => [n.number, n])), [graph]);
 
   const nodes = useMemo<FlowNode[]>(() => {
@@ -107,15 +125,19 @@ export function GraphCanvas({ graph, layout, categories, traced, onHover, onSele
   }, [layout, issues, traced]);
 
   return (
-    <div className="min-w-0 flex-1">
+    <div ref={wrap} className="min-w-0 flex-1">
       <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
         colorMode="dark"
-        fitView
-        fitViewOptions={{ padding: 0.1, maxZoom: 1.25 }}
+        // Fires once per mount, so Refresh and expand/collapse leave the viewport where the user put it.
+        onInit={(instance: ReactFlowInstance<FlowNode, Edge>) => instance.setViewport(initialViewport(wrap.current?.clientWidth ?? 0, layout))}
+        // Figma's input model: scroll pans (a trackpad's two fingers), pinch and Meta/Ctrl+scroll zoom.
+        panOnScroll
+        zoomOnScroll={false}
         minZoom={0.1}
+        maxZoom={2}
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={false}

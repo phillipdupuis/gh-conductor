@@ -35,13 +35,24 @@ export const PALETTE = {
 
 const FONT: Record<Category, string> = { ready: "#ffffff", in_progress: "#ffffff", waiting: "#ffffff", blocked: "#c9d1d9", done: "#ffffff" };
 
+/**
+ * Plain GitHub/PM words, same vocabulary as the page's sidebar. "waiting" covers two sidebar
+ * sections ("In review" and "Assigned"), so the category-only label names both; per-issue callers
+ * should use issueLabel() to get the specific one.
+ */
 export const CATEGORY_LABEL: Record<Category, string> = {
-  ready: "Awaiting agent",
-  in_progress: "Agent in progress",
-  waiting: "Awaiting human",
+  ready: "Ready",
+  in_progress: "In progress",
+  waiting: "Waiting on review or assigned",
   blocked: "Blocked",
   done: "Done",
 };
+
+/** Category label refined for one issue: "waiting" splits into "In review" / "Assigned". */
+export function issueLabel(n: Issue, cat: Category): string {
+  if (cat === "waiting") return n.pr?.state === "review" ? "In review" : "Assigned";
+  return CATEGORY_LABEL[cat];
+}
 
 /** Escape for a DOT double-quoted string. */
 export function dq(s: string): string {
@@ -69,7 +80,7 @@ export function wrap(s: string, width = 30): string {
 }
 
 function tooltip(n: Issue, cat: Category, g: Graph, inGraph: Set<number>): string {
-  const parts = [CATEGORY_LABEL[cat]];
+  const parts = [issueLabel(n, cat)];
   // Blockers not drawn in this graph are marked "(outside epic)".
   const blocked = blockedByText(n, g, (b) => `#${b.number}${inGraph.has(b.number) ? "" : " (outside epic)"}`);
   if (blocked) parts.push(blocked);

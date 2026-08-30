@@ -44,7 +44,7 @@ export function LayerNode({ data }: NodeProps<LayerFlowNode>) {
                   hot && "bg-accent",
                 )}
               >
-                <StatusIcon category={categories.get(n.number) ?? "blocked"} />
+                <StatusIcon category={categories.get(n.number) ?? "blocked"} issue={n} size={12} />
                 <span className="min-w-0 truncate">
                   <span className="text-muted-foreground">#{n.number}</span> {n.title}
                 </span>
