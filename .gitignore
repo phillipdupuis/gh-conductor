@@ -12,3 +12,6 @@ docs/
 
 # Phillip's personal skills/agents/notes — local-only, easy to spot and invoke (/pdupuis-foo)
 pdupuis-*
+
+# Dependencies (bun)
+node_modules/

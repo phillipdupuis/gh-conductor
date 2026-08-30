@@ -1,0 +1,19 @@
+{
+  "name": "gh-conductor-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Read-only graph/ready/status/view commands for gh-conductor. Requires bun and gh >= 2.94.",
+  "bin": {
+    "conductor": "./src/main.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "check": "bun x tsc --noEmit",
+    "vendor": "bun scripts/vendor-viz.ts",
+    "fixtures": "bun scripts/build-fixtures.ts"
+  },
+  "devDependencies": {
+    "bun-types": "^1.4.0"
+  }
+}
