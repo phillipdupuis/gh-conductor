@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 type Props = {
   epic: EpicPath;
   view: ViewModel | null;
-  layers: number[][] | null;
+  layers: string[][] | null;
   expanded: ReadonlySet<number>;
   loading: boolean;
   error: string | null;
@@ -19,8 +19,6 @@ type Props = {
 };
 
 export function Header({ epic, view, layers, expanded, loading, error, onRefresh, onExpandAll, onCollapseAll }: Props) {
-  const total = view?.graph.nodes.length ?? 0;
-  const done = view?.graph.nodes.filter((n) => n.state === "closed").length ?? 0;
   const collapsible = (layers ?? []).flatMap((l, i) => (isCollapsible(l) ? [i] : []));
   const allExpanded = collapsible.every((i) => expanded.has(i));
   const noneExpanded = !collapsible.some((i) => expanded.has(i));
@@ -42,7 +40,7 @@ export function Header({ epic, view, layers, expanded, loading, error, onRefresh
         <p className="truncate text-xs text-muted-foreground">
           {view ? (
             <>
-              {view.graph.repo} · {view.graph.epic.state} · {done}/{total} done · loaded {relativeTime(view.generatedAt)}
+              {view.graph.repo} · {view.graph.epic.state} · loaded {relativeTime(view.generatedAt)}
             </>
           ) : (
             " "

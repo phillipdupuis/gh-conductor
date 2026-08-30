@@ -5,6 +5,8 @@ import { boundsOf, layoutGraph, type Box, type Layout, type LayerPlacement } fro
 import { Graph } from "../src/core/schema.ts";
 import mid from "../fixtures/upgrade-python-mid.json";
 
+const k = (n: number, repo = "northbeam/platform") => `${repo}#${n}`;
+
 const g = Graph.parse(mid);
 const layers = layersOf(g);
 
@@ -22,7 +24,7 @@ describe("layoutGraph (upgrade-python-mid, everything collapsed)", () => {
   test("rows are stacked top-down at GAP_Y pitch, the epic at y = 0", () => {
     const top = layout.layers[layout.layers.length - 1]!;
     expect(top.y).toBe(0);
-    expect(top.issues).toEqual([120]);
+    expect(top.issues).toEqual([k(120)]);
     for (let i = layers.length - 1; i > 0; i--) {
       const above = layout.layers[i]!;
       const below = layout.layers[i - 1]!;
@@ -42,10 +44,10 @@ describe("layoutGraph (upgrade-python-mid, everything collapsed)", () => {
   test("edges join representatives, deduped, and keep the underlying pairs", () => {
     const ids = new Set(layout.edges.map((e) => e.id));
     expect(ids.size).toBe(layout.edges.length);
-    const fanIn = layout.edges.find((e) => e.source === "129" && e.target.startsWith("layer-"))!;
+    const fanIn = layout.edges.find((e) => e.source === k(129) && e.target.startsWith("layer-"))!;
     expect(fanIn.kind).toBe("blocking");
     expect(fanIn.pairs.length).toBe(10);
-    const up = layout.edges.find((e) => e.source.startsWith("layer-") && e.target === "130")!;
+    const up = layout.edges.find((e) => e.source.startsWith("layer-") && e.target === k(130))!;
     expect(up.kind).toBe("tree");
     expect(layout.edges.every((e) => e.source !== e.target)).toBe(true);
   });
@@ -75,7 +77,7 @@ describe("layoutGraph (expanded)", () => {
     for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) expect(overlaps(boxes[i]!, boxes[j]!)).toBe(false);
   });
   test("edges fan out to the individual issues", () => {
-    expect(layout.edges.filter((e) => e.source === "129" && e.kind === "blocking").length).toBe(10);
+    expect(layout.edges.filter((e) => e.source === k(129) && e.kind === "blocking").length).toBe(10);
   });
 });
 
@@ -85,7 +87,7 @@ describe("boundsOf", () => {
   test("covers every placed box: issue, list node, frame and toggle", () => {
     // Each box owns exactly one extreme, so dropping any one of the four sources changes the answer.
     const layout: Layout = {
-      issues: [{ number: 1, layer: 0, x: 300, y: 100, width: 220, height: 56 }], // maxX = 520
+      issues: [{ key: k(1), layer: 0, x: 300, y: 100, width: 220, height: 56 }], // maxX = 520
       layers: [
         row({ layer: 0, node: { x: -180, y: 300, width: 360, height: 120 } }), // maxY = 420
         row({ layer: 1, frame: { x: -260, y: 0, width: 520, height: 80 }, toggle: { x: -48, y: -22, width: 96, height: 28 } }), // minX = -260, minY = -22
@@ -102,7 +104,7 @@ describe("boundsOf", () => {
   });
 
   test("a single box's bounds are the box itself", () => {
-    const layout: Layout = { issues: [{ number: 7, layer: 0, x: -110, y: 64, width: 220, height: 56 }], layers: [], edges: [] };
+    const layout: Layout = { issues: [{ key: k(7), layer: 0, x: -110, y: 64, width: 220, height: 56 }], layers: [], edges: [] };
     expect(boundsOf(layout)).toEqual({ minX: -110, minY: 64, maxX: 110, maxY: 120 });
   });
 

@@ -1,5 +1,6 @@
 import { Background, Controls, MarkerType, MiniMap, Position, ReactFlow, type Edge, type NodeTypes, type ReactFlowInstance } from "@xyflow/react";
 import { useMemo, useRef } from "react";
+import { keyOf } from "../../core/graph.ts";
 import { boundsOf, layerId, type Box, type Layout } from "../../core/layout.ts";
 import type { Category, Graph, Issue } from "../../core/schema.ts";
 import type { Trace } from "../../core/trace.ts";
@@ -31,10 +32,10 @@ type FlowNode = IssueFlowNode | LayerFlowNode | LayerFrameFlowNode | LayerToggle
 type Props = {
   graph: Graph;
   layout: Layout;
-  categories: Map<number, Category>;
+  categories: Map<string, Category>;
   traced: Trace | null;
-  onHover: (n: number | null) => void;
-  onSelect: (n: number) => void;
+  onHover: (n: string | null) => void;
+  onSelect: (n: string) => void;
   onExpand: (layer: number) => void;
   onCollapse: (layer: number) => void;
 };
@@ -73,21 +74,21 @@ function placed(b: Box, withHandles: boolean) {
 
 export function GraphCanvas({ graph, layout, categories, traced, onHover, onSelect, onExpand, onCollapse }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
-  const issues = useMemo(() => new Map<number, Issue>([graph.epic, ...graph.nodes].map((n) => [n.number, n])), [graph]);
+  const issues = useMemo(() => new Map<string, Issue>([graph.epic, ...graph.nodes, ...graph.related].map((n) => [keyOf(n), n])), [graph]);
 
   const nodes = useMemo<FlowNode[]>(() => {
     const out: FlowNode[] = [];
     // Frames first: nodes paint in array order, so columns and toggles draw over them.
     for (const l of layout.layers) if (l.frame) out.push({ id: `frame-${l.layer}`, type: "layerFrame", ...placed(l.frame, false), selectable: false, data: { layer: l.layer } });
     for (const p of layout.issues) {
-      const issue = issues.get(p.number);
+      const issue = issues.get(p.key);
       if (!issue) continue;
-      const category: Category | "epic" = issue.number === graph.epic.number ? "epic" : (categories.get(issue.number) ?? "blocked");
+      const category: Category | "epic" = p.key === keyOf(graph.epic) ? "epic" : (categories.get(p.key) ?? "blocked");
       out.push({
-        id: String(issue.number),
+        id: p.key,
         type: "issue",
         ...placed(p, true),
-        data: { issue, category, dim: traced !== null && !traced.lit.has(issue.number), focus: traced?.focus === issue.number },
+        data: { issue, category, rootRepo: graph.repo, dim: traced !== null && !traced.lit.has(p.key), focus: traced?.focus === p.key },
       });
     }
     for (const l of layout.layers) {
@@ -96,7 +97,7 @@ export function GraphCanvas({ graph, layout, categories, traced, onHover, onSele
           id: layerId(l.layer),
           type: "layer",
           ...placed(l.node, true),
-          data: { layer: l.layer, issues: l.issues.flatMap((n) => issues.get(n) ?? []), categories, traced, onHover, onSelect, onExpand },
+          data: { layer: l.layer, issues: l.issues.flatMap((n) => issues.get(n) ?? []), rootRepo: graph.repo, categories, traced, onHover, onSelect, onExpand },
         });
       }
       if (l.toggle) out.push({ id: `toggle-${l.layer}`, type: "layerToggle", ...placed(l.toggle, false), data: { layer: l.layer, onToggle: onCollapse } });
@@ -105,8 +106,8 @@ export function GraphCanvas({ graph, layout, categories, traced, onHover, onSele
   }, [graph, layout, issues, categories, traced, onHover, onSelect, onExpand, onCollapse]);
 
   const edges = useMemo<Edge[]>(() => {
-    const lit = (a: number, b: number) => traced === null || (traced.lit.has(a) && traced.lit.has(b));
-    const closed = (n: number) => issues.get(n)?.state === "closed";
+    const lit = (a: string, b: string) => traced === null || (traced.lit.has(a) && traced.lit.has(b));
+    const closed = (n: string) => issues.get(n)?.state === "closed";
     return layout.edges.map((e) => {
       // An aggregated edge is lit if any of the issue-level edges behind it is; done if all are.
       const on = e.pairs.some(([a, b]) => lit(a, b));
@@ -142,9 +143,9 @@ export function GraphCanvas({ graph, layout, categories, traced, onHover, onSele
         nodesConnectable={false}
         elementsSelectable={false}
         // Layer nodes report hover/click per row from inside; toggles are buttons.
-        onNodeMouseEnter={(_, n) => n.type === "issue" && onHover(Number(n.id))}
+        onNodeMouseEnter={(_, n) => n.type === "issue" && onHover(n.id)}
         onNodeMouseLeave={() => onHover(null)}
-        onNodeClick={(_, n) => n.type === "issue" && onSelect(Number(n.id))}
+        onNodeClick={(_, n) => n.type === "issue" && onSelect(n.id)}
       >
         <Background gap={24} size={1} />
         <Controls showInteractive={false} />

@@ -12,6 +12,10 @@ const VIEWER = "phillipdupuis";
 const EPIC = 120;
 /** Devops-sprint issue outside the epic's tree: the upgrade switches pip → uv, so no code starts until it ships. */
 const UV = 57;
+const UV_REPO = REPO;
+
+const repoOf = (n: number): string => (n === UV ? UV_REPO : REPO);
+const key = (n: number): string => `${repoOf(n)}#${n}`;
 
 const CUSTOMERS = ["Halcyon Freight", "Bluefin Grocers", "Orrin Health", "Tidewater Energy", "Kestrel Media", "Marlowe Insurance", "Sable Logistics", "Pinecrest Retail", "Vantage Telecom", "Lumen Labs"];
 
@@ -90,10 +94,11 @@ const updatedAt = (number: number, stage: Stage): string => {
 export function upgradePython(stage: Stage): Graph {
   const status = STATUS[stage];
   const stateOf = (n: number): IssueState => status[n]?.state ?? "open";
-  const url = (n: number) => `https://github.com/${REPO}/issues/${n}`;
-  const blocker = (n: number): Blocker => ({ number: n, title: TITLES[n]!, url: url(n), state: stateOf(n) });
+  const url = (n: number) => `https://github.com/${repoOf(n)}/issues/${n}`;
+  const blocker = (n: number): Blocker => ({ repo: repoOf(n), number: n, title: TITLES[n]!, url: url(n), state: stateOf(n) });
   const depth = (s: Spec): number => (s.parent === EPIC ? 1 : 2);
   const node = (s: Spec): Issue => ({
+    repo: REPO,
     number: s.number,
     title: s.title,
     url: url(s.number),
@@ -101,7 +106,7 @@ export function upgradePython(stage: Stage): Graph {
     assignees: status[s.number]?.assignees ?? [],
     blockedBy: (s.blockedBy ?? []).map(blocker),
     pr: status[s.number]?.pr ?? null,
-    parent: s.parent,
+    parent: key(s.parent),
     depth: depth(s),
     updatedAt: updatedAt(s.number, stage),
   });
@@ -112,8 +117,9 @@ export function upgradePython(stage: Stage): Graph {
   return {
     repo: REPO,
     viewer: VIEWER,
-    epic: { number: EPIC, title: TITLES[EPIC]!, url: url(EPIC), state: "open", assignees: [], blockedBy: [], pr: null, parent: null, depth: 0, updatedAt: updatedAt(EPIC, stage) },
+    epic: { repo: REPO, number: EPIC, title: TITLES[EPIC]!, url: url(EPIC), state: "open", assignees: [], blockedBy: [], pr: null, parent: null, depth: 0, updatedAt: updatedAt(EPIC, stage) },
     nodes: walk(EPIC),
+    related: [],
   };
 }
 

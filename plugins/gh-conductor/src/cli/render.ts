@@ -1,10 +1,10 @@
 // Human-readable output. --json bypasses all of this.
 
-import { blockedByText, categorize, groupByCategory, type Category, type Graph, type Issue } from "../core/graph.ts";
+import { blockedByText, categorize, groupByCategory, refLabel, type Category, type Graph, type Issue } from "../core/graph.ts";
 
 function annotations(n: Issue, g: Graph): string[] {
   const a: string[] = [];
-  const blocked = blockedByText(n, g, (b) => `#${b.number}`);
+  const blocked = blockedByText(n, g, (b) => refLabel(b, g.repo));
   if (blocked) a.push(blocked);
   if (n.assignees.length) a.push(`assigned ${n.assignees.map((x) => `@${x}`).join(", ")}`);
   if (n.pr) a.push(`PR #${n.pr.number} ${n.pr.state}`);
@@ -13,12 +13,11 @@ function annotations(n: Issue, g: Graph): string[] {
 
 function line(n: Issue, g: Graph, indent = "  "): string {
   const ann = annotations(n, g);
-  return `${indent}#${n.number} ${n.title}${ann.length ? `  · ${ann.join(" · ")}` : ""}`;
+  return `${indent}${refLabel(n, g.repo)} ${n.title}${ann.length ? `  · ${ann.join(" · ")}` : ""}`;
 }
 
 function header(g: Graph): string {
-  const done = g.nodes.filter((n) => n.state === "closed").length;
-  return `#${g.epic.number} ${g.epic.title} — ${g.epic.state}, ${done}/${g.nodes.length} done`;
+  return `#${g.epic.number} ${g.epic.title} — ${g.epic.state}`;
 }
 
 export function renderGraph(g: Graph): string {

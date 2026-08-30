@@ -13,7 +13,7 @@
 // shape or line style.
 
 import { NODE_HEIGHT, NODE_WIDTH } from "../core/constants.ts";
-import { blockedByText, categorize, type Category, type Graph, type Issue } from "../core/graph.ts";
+import { blockedByText, categorize, keyOf, refLabel, type Category, type Graph, type Issue } from "../core/graph.ts";
 
 /** GitHub Primer dark palette, so the page reads like github.com. */
 export const PALETTE = {
@@ -79,22 +79,28 @@ export function wrap(s: string, width = 30): string {
   return lines.map(esc).join("<br/>");
 }
 
-function tooltip(n: Issue, cat: Category, g: Graph, inGraph: Set<number>): string {
+/** SVG ids have to survive CSS selectors, so "/" and "#" come out as "-". */
+const domId = (key: string) => key.replace(/[/#]/g, "-");
+
+/** refLabel for a key, where the Issue itself isn't at hand. */
+const keyLabel = (key: string, rootRepo: string) => (key.startsWith(`${rootRepo}#`) ? key.slice(rootRepo.length) : key);
+
+function tooltip(n: Issue, cat: Category, g: Graph, inGraph: Set<string>): string {
   const parts = [issueLabel(n, cat)];
-  // Blockers not drawn in this graph are marked "(outside epic)".
-  const blocked = blockedByText(n, g, (b) => `#${b.number}${inGraph.has(b.number) ? "" : " (outside epic)"}`);
+  // Blockers this graph does not draw are marked "(not shown)".
+  const blocked = blockedByText(n, g, (b) => `${refLabel(b, g.repo)}${inGraph.has(keyOf(b)) ? "" : " (not shown)"}`);
   if (blocked) parts.push(blocked);
   if (n.assignees.length) parts.push(`assigned ${n.assignees.map((a) => `@${a}`).join(", ")}`);
   if (n.pr) parts.push(`PR #${n.pr.number} ${n.pr.state}`);
   return parts.join(" · ");
 }
 
-function nodeStmt(n: Issue, cat: Category, cls: string, g: Graph, inGraph: Set<number>): string {
+function nodeStmt(n: Issue, cat: Category, cls: string, g: Graph, inGraph: Set<string>): string {
   const fill = PALETTE.fill[cat];
   const attrs = [
-    `id="issue-${n.number}"`,
+    `id="issue-${domId(keyOf(n))}"`,
     `class=${dq(cls)}`,
-    `label=<#${n.number} ${wrap(n.title)}>`,
+    `label=<${esc(refLabel(n, g.repo))} ${wrap(n.title)}>`,
     `URL=${dq(n.url)}`,
     `target="_blank"`,
     `tooltip=${dq(tooltip(n, cat, g, inGraph))}`,
@@ -103,11 +109,12 @@ function nodeStmt(n: Issue, cat: Category, cls: string, g: Graph, inGraph: Set<n
     `color=${dq(fill)}`,
     `fontcolor=${dq(FONT[cat])}`,
   ];
-  return `"i${n.number}" [${attrs.join(" ")}];`;
+  return `${dq(keyOf(n))} [${attrs.join(" ")}];`;
 }
 
 export function toDot(g: Graph): string {
-  const inGraph = new Set(g.nodes.map((n) => n.number));
+  const drawn = [g.epic, ...g.nodes, ...g.related];
+  const inGraph = new Set(drawn.map(keyOf));
   const e = g.epic;
 
   const out: string[] = [];
@@ -119,9 +126,9 @@ export function toDot(g: Graph): string {
   out.push(`  edge [fontname="Arial" arrowsize=1 color="${PALETTE.edge}" penwidth=1.8];`);
 
   const epicAttrs = [
-    `id="issue-${e.number}"`,
+    `id="issue-${domId(keyOf(e))}"`,
     `class="node epic"`,
-    `label=<#${e.number} ${wrap(e.title)}>`,
+    `label=<${esc(refLabel(e, g.repo))} ${wrap(e.title)}>`,
     `URL=${dq(e.url)}`,
     `target="_blank"`,
     `tooltip=${dq(`epic · ${e.state}`)}`,
@@ -131,8 +138,8 @@ export function toDot(g: Graph): string {
     `fontcolor=${dq(PALETTE.fg)}`,
     `fontsize=11`,
   ];
-  out.push(`  "i${e.number}" [${epicAttrs.join(" ")}];`);
-  for (const n of g.nodes) {
+  out.push(`  ${dq(keyOf(e))} [${epicAttrs.join(" ")}];`);
+  for (const n of [...g.nodes, ...g.related]) {
     const cat = categorize(n, g);
     out.push(`  ${nodeStmt(n, cat, `node ${cat}`, g, inGraph)}`);
   }
@@ -140,20 +147,23 @@ export function toDot(g: Graph): string {
   // Containment: sub-issue → parent. A dependency like any other (the parent can't close first), drawn
   // muted so the explicit DAG stays readable. Dimmed once the sub-issue is closed, like a blocking edge.
   for (const n of g.nodes) {
-    const p = n.parent ?? e.number;
-    out.push(`  "i${n.number}" -> "i${p}" [id="tree-${n.number}-${p}" class=${dq(n.state === "closed" ? "tree done" : "tree")} color="${PALETTE.line}" penwidth=1.2 arrowsize=0.7 tooltip=${dq(`#${p} is blocked by sub-issue #${n.number}${n.state === "closed" ? " (closed)" : ""}`)}];`);
+    const k = keyOf(n);
+    const p = n.parent ?? keyOf(e);
+    out.push(`  ${dq(k)} -> ${dq(p)} [id="tree-${domId(k)}-${domId(p)}" class=${dq(n.state === "closed" ? "tree done" : "tree")} color="${PALETTE.line}" penwidth=1.2 arrowsize=0.7 tooltip=${dq(`${keyLabel(p, g.repo)} is blocked by sub-issue ${refLabel(n, g.repo)}${n.state === "closed" ? " (closed)" : ""}`)}];`);
   }
 
-  for (const n of g.nodes) {
+  for (const n of drawn) {
     for (const b of n.blockedBy) {
-      if (!inGraph.has(b.number)) continue;
+      const bk = keyOf(b);
+      if (!inGraph.has(bk)) continue;
+      const k = keyOf(n);
       const done = b.state === "closed" || n.state === "closed";
       const attrs = [
-        `id="edge-${b.number}-${n.number}"`,
+        `id="edge-${domId(bk)}-${domId(k)}"`,
         `class=${dq(done ? "edge done" : "edge")}`,
-        `tooltip=${dq(`#${n.number} blocked by #${b.number}${b.state === "closed" ? " (closed)" : ""}`)}`,
+        `tooltip=${dq(`${refLabel(n, g.repo)} blocked by ${refLabel(b, g.repo)}${b.state === "closed" ? " (closed)" : ""}`)}`,
       ];
-      out.push(`  "i${b.number}" -> "i${n.number}" [${attrs.join(" ")}];`);
+      out.push(`  ${dq(bk)} -> ${dq(k)} [${attrs.join(" ")}];`);
     }
   }
   out.push("}");

@@ -1,15 +1,16 @@
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
+import { refLabel } from "../../core/graph.ts";
 import type { Category, Issue } from "../../core/schema.ts";
 import { statusColor } from "../lib/categories.ts";
 import { AvatarStack, PrChip, StatusIcon } from "./StatusIcon.tsx";
 import { cn } from "@/lib/utils";
 
-export type IssueNodeData = { issue: Issue; category: Category | "epic"; dim: boolean; focus: boolean };
+export type IssueNodeData = { issue: Issue; category: Category | "epic"; rootRepo: string; dim: boolean; focus: boolean };
 export type IssueFlowNode = Node<IssueNodeData, "issue">;
 
 /** Status is the border color (+ octicon), never a fill: the interior stays high-contrast card. */
 export function IssueNode({ data }: NodeProps<IssueFlowNode>) {
-  const { issue, category, dim, focus } = data;
+  const { issue, category, rootRepo, dim, focus } = data;
   const ready = category === "ready";
   return (
     <div
@@ -26,7 +27,7 @@ export function IssueNode({ data }: NodeProps<IssueFlowNode>) {
       <Handle type="source" position={Position.Top} />
       {category !== "epic" && <StatusIcon category={category} issue={issue} />}
       <span className="line-clamp-2 min-w-0 flex-1 break-words">
-        <span className="font-semibold text-muted-foreground">#{issue.number}</span> {issue.title}
+        <span className="font-semibold text-muted-foreground">{refLabel(issue, rootRepo)}</span> {issue.title}
       </span>
       {(issue.assignees.length > 0 || issue.pr) && (
         <span className="flex shrink-0 flex-col items-end gap-1">

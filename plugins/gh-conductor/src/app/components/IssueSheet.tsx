@@ -1,6 +1,6 @@
 import { IssueClosedIcon, IssueOpenedIcon } from "@primer/octicons-react";
 import { ExternalLink } from "lucide-react";
-import { childrenOf, relativeTime } from "../../core/graph.ts";
+import { childrenOf, keyOf, refLabel, relativeTime } from "../../core/graph.ts";
 import type { Graph, Issue } from "../../core/schema.ts";
 import { AvatarStack, PrChip } from "./StatusIcon.tsx";
 import { Badge } from "@/components/ui/badge";
@@ -12,29 +12,37 @@ type Props = {
   issue: Issue | null;
   graph: Graph;
   onClose: () => void;
-  onSelect: (n: number) => void;
+  onSelect: (n: string) => void;
 };
 
 export function IssueSheet({ issue, graph, onClose, onSelect }: Props) {
-  const isEpic = issue?.number === graph.epic.number;
-  const inGraph = new Set([graph.epic.number, ...graph.nodes.map((n) => n.number)]);
-  const blocks = issue ? graph.nodes.filter((n) => n.blockedBy.some((b) => b.number === issue.number)) : [];
-  const children = issue ? (childrenOf(graph).get(issue.number) ?? []) : [];
+  const isEpic = issue !== null && keyOf(issue) === keyOf(graph.epic);
+  const inGraph = new Set([graph.epic, ...graph.nodes, ...graph.related].map(keyOf));
+  const blocks = issue ? [...graph.nodes, ...graph.related].filter((n) => n.blockedBy.some((b) => keyOf(b) === keyOf(issue))) : [];
+  const children = issue ? (childrenOf(graph).get(keyOf(issue)) ?? []) : [];
 
-  const ref = (n: { number: number; title: string; url: string; state: "open" | "closed" }, outside = false) => (
-    <li key={n.number} className="flex min-w-0 items-baseline gap-2">
-      {inGraph.has(n.number) ? (
-        <button type="button" onClick={() => onSelect(n.number)} className={cn("min-w-0 truncate text-left hover:underline", n.state === "closed" && "text-muted-foreground line-through")}>
-          <span className="text-muted-foreground">#{n.number}</span> {n.title}
-        </button>
-      ) : (
-        <a href={n.url} target="_blank" rel="noreferrer" className={cn("min-w-0 truncate hover:underline", n.state === "closed" && "text-muted-foreground line-through")}>
-          <span className="text-muted-foreground">#{n.number}</span> {n.title}
-        </a>
-      )}
-      {outside && <span className="shrink-0 text-xs text-muted-foreground">outside epic</span>}
-    </li>
-  );
+  /** A reference to another issue: a jump when it is on the canvas, a github.com link when it is not. */
+  const ref = (n: { repo: string; number: number; title: string; url: string; state: "open" | "closed" }) => {
+    const key = keyOf(n);
+    const label = (
+      <>
+        <span className="text-muted-foreground">{refLabel(n, graph.repo)}</span> {n.title}
+      </>
+    );
+    return (
+      <li key={key} className="flex min-w-0 items-baseline gap-2">
+        {inGraph.has(key) ? (
+          <button type="button" onClick={() => onSelect(key)} className={cn("min-w-0 truncate text-left hover:underline", n.state === "closed" && "text-muted-foreground line-through")}>
+            {label}
+          </button>
+        ) : (
+          <a href={n.url} target="_blank" rel="noreferrer" className={cn("min-w-0 truncate hover:underline", n.state === "closed" && "text-muted-foreground line-through")}>
+            {label}
+          </a>
+        )}
+      </li>
+    );
+  };
 
   return (
     <Sheet open={issue !== null} onOpenChange={(open) => !open && onClose()} modal={false}>
@@ -43,7 +51,7 @@ export function IssueSheet({ issue, graph, onClose, onSelect }: Props) {
           <>
             <SheetHeader>
               <SheetTitle className="pr-6 leading-snug break-words">
-                <span className="text-muted-foreground">#{issue.number}</span> {issue.title}
+                <span className="text-muted-foreground">{refLabel(issue, graph.repo)}</span> {issue.title}
               </SheetTitle>
               <SheetDescription className="flex flex-wrap items-center gap-2">
                 <StatePill state={issue.state} />
@@ -72,7 +80,7 @@ export function IssueSheet({ issue, graph, onClose, onSelect }: Props) {
                   <Empty>none</Empty>
                 )}
               </Field>
-              <Field label="Blocked by">{issue.blockedBy.length ? <ul className="space-y-1">{issue.blockedBy.map((b) => ref(b, !inGraph.has(b.number)))}</ul> : <Empty>nothing</Empty>}</Field>
+              <Field label="Blocked by">{issue.blockedBy.length ? <ul className="space-y-1">{issue.blockedBy.map((b) => ref(b))}</ul> : <Empty>nothing</Empty>}</Field>
               <Field label="Blocks">{blocks.length ? <ul className="space-y-1">{blocks.map((n) => ref(n))}</ul> : <Empty>nothing</Empty>}</Field>
               {children.length > 0 && (
                 <Field label="Sub-issues">

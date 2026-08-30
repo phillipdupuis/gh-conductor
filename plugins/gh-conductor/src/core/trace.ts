@@ -1,24 +1,33 @@
 // Hover trace: what an issue is waiting on (upstream) and what it holds up (downstream), following
 // explicit "blocked by" edges only. Containment edges light up when both ends are already lit.
 
+import { keyOf } from "./graph.ts";
 import type { Graph } from "./schema.ts";
 
-export type Adjacency = { up: Map<number, number[]>; down: Map<number, number[]> };
+export type Adjacency = { up: Map<string, string[]>; down: Map<string, string[]> };
 
 export function adjacency(g: Graph): Adjacency {
-  const up = new Map<number, number[]>();
-  const down = new Map<number, number[]>();
-  const inGraph = new Set([g.epic.number, ...g.nodes.map((n) => n.number)]);
-  for (const n of [g.epic, ...g.nodes]) {
-    up.set(n.number, n.blockedBy.map((b) => b.number).filter((b) => inGraph.has(b)));
-    if (!down.has(n.number)) down.set(n.number, []);
-    for (const b of n.blockedBy) if (inGraph.has(b.number)) down.set(b.number, [...(down.get(b.number) ?? []), n.number]);
+  const up = new Map<string, string[]>();
+  const down = new Map<string, string[]>();
+  const all = [g.epic, ...g.nodes, ...g.related];
+  const inGraph = new Set(all.map(keyOf));
+  for (const n of all) {
+    const k = keyOf(n);
+    up.set(
+      k,
+      n.blockedBy.map(keyOf).filter((b) => inGraph.has(b)),
+    );
+    if (!down.has(k)) down.set(k, []);
+    for (const b of n.blockedBy) {
+      const bk = keyOf(b);
+      if (inGraph.has(bk)) down.set(bk, [...(down.get(bk) ?? []), k]);
+    }
   }
   return { up, down };
 }
 
-function closure(start: number, adj: Map<number, number[]>): Set<number> {
-  const seen = new Set<number>();
+function closure(start: string, adj: Map<string, string[]>): Set<string> {
+  const seen = new Set<string>();
   const stack = [...(adj.get(start) ?? [])];
   while (stack.length) {
     const x = stack.pop()!;
@@ -29,9 +38,9 @@ function closure(start: number, adj: Map<number, number[]>): Set<number> {
   return seen;
 }
 
-export type Trace = { focus: number; up: Set<number>; down: Set<number>; lit: Set<number> };
+export type Trace = { focus: string; up: Set<string>; down: Set<string>; lit: Set<string> };
 
-export function trace(focus: number, adj: Adjacency): Trace {
+export function trace(focus: string, adj: Adjacency): Trace {
   const up = closure(focus, adj.up);
   const down = closure(focus, adj.down);
   return { focus, up, down, lit: new Set([focus, ...up, ...down]) };

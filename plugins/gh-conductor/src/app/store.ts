@@ -11,8 +11,8 @@ export type Load = { status: "idle" } | { status: "loading"; prev: ViewModel | n
 type State = {
   epic: EpicPath | null;
   load: Load;
-  hover: number | null;
-  selected: number | null;
+  hover: string | null;
+  selected: string | null;
   /** Layer indices shown as columns instead of one list node. Survives Refresh. */
   expanded: ReadonlySet<number>;
 };
@@ -21,8 +21,8 @@ type Actions = {
   init: (epic: EpicPath | null) => void;
   refresh: () => Promise<void>;
   receiveView: (view: ViewModel) => void;
-  setHover: (n: number | null) => void;
-  setSelected: (n: number | null) => void;
+  setHover: (n: string | null) => void;
+  setSelected: (n: string | null) => void;
   expand: (i: number) => void;
   collapse: (i: number) => void;
   expandAll: () => void;
@@ -70,7 +70,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
   expandAll: () => {
     const view = currentView(get());
     if (!view) return;
-    let layers: number[][];
+    let layers: string[][];
     try {
       layers = layersOf(view.graph);
     } catch {

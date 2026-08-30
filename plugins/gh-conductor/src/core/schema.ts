@@ -10,13 +10,22 @@ export type IssueState = z.infer<typeof IssueState>;
 export const PrState = z.enum(["none", "draft", "review", "merged", "closed"]);
 export type PrState = z.infer<typeof PrState>;
 
-export const Blocker = z.object({ number: z.number().int(), title: z.string(), url: z.string(), state: IssueState });
+export const Blocker = z.object({
+  /** "owner/name" — a blocker can live in another repo. */
+  repo: z.string(),
+  number: z.number().int(),
+  title: z.string(),
+  url: z.string(),
+  state: IssueState,
+});
 export type Blocker = z.infer<typeof Blocker>;
 
 export const Pr = z.object({ number: z.number().int(), url: z.string(), state: PrState });
 export type Pr = z.infer<typeof Pr>;
 
 export const Issue = z.object({
+  /** "owner/name" */
+  repo: z.string(),
   number: z.number().int(),
   title: z.string(),
   url: z.string(),
@@ -24,7 +33,8 @@ export const Issue = z.object({
   assignees: z.array(z.string()),
   blockedBy: z.array(Blocker),
   pr: Pr.nullable(),
-  parent: z.number().int().nullable(),
+  /** The parent's key, "owner/repo#N". */
+  parent: z.string().nullable(),
   /** 0 = epic */
   depth: z.number().int(),
   /** ISO 8601, from GitHub */
@@ -33,13 +43,15 @@ export const Issue = z.object({
 export type Issue = z.infer<typeof Issue>;
 
 export const Graph = z.object({
-  /** "owner/name" */
+  /** "owner/name" — the epic's repo, and what `refLabel` abbreviates against. */
   repo: z.string(),
   /** Login of the `gh` user the graph was loaded as, or null if unknown. */
   viewer: z.string().nullable(),
   epic: Issue,
   /** Every descendant of the epic, depth-first in GitHub's sub-issue order. Excludes the epic. */
   nodes: z.array(Issue),
+  /** Issues reached from the tree by one blocked-by hop, in either direction. Excludes tree nodes. */
+  related: z.array(Issue),
 });
 export type Graph = z.infer<typeof Graph>;
 
@@ -62,13 +74,26 @@ const GhState = z.enum(["OPEN", "CLOSED"]);
 export const RawPr = z.object({ number: z.number().int(), url: z.string(), isDraft: z.boolean(), state: z.enum(["OPEN", "CLOSED", "MERGED"]) });
 export type RawPr = z.infer<typeof RawPr>;
 
+const RawRepository = z.object({ nameWithOwner: z.string() });
+
+/** A bare cross-repo issue reference, as GitHub returns it inside a `blockedBy` / `blocking` list. */
+export const RawRef = z.object({
+  number: z.number().int(),
+  title: z.string(),
+  url: z.string(),
+  state: GhState,
+  repository: RawRepository,
+});
+export type RawRef = z.infer<typeof RawRef>;
+
 export const RawIssue = z.object({
   number: z.number().int(),
   title: z.string(),
   url: z.string(),
   state: GhState,
+  repository: RawRepository,
   assignees: z.object({ nodes: z.array(z.object({ login: z.string() })) }),
-  blockedBy: z.object({ nodes: z.array(z.object({ number: z.number().int(), title: z.string(), url: z.string(), state: GhState })) }),
+  blockedBy: z.object({ nodes: z.array(RawRef) }),
   updatedAt: z.string(),
   closedByPullRequestsReferences: z.object({ nodes: z.array(RawPr) }),
   subIssuesSummary: z.object({ total: z.number().int() }),

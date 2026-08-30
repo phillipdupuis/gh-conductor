@@ -1,20 +1,24 @@
 import { describe, expect, test } from "bun:test";
-import { categorize, readyNodes, relativeTime, summarizePrs, type Blocker, type Graph, type Issue } from "../src/core/graph.ts";
+import { categorize, keyOf, readyNodes, refLabel, relativeTime, summarizePrs, type Blocker, type Graph, type Issue } from "../src/core/graph.ts";
+
+const REPO = "o/r";
+export const k = (n: number, repo = REPO) => `${repo}#${n}`;
 
 export const node = (over: Partial<Issue> & { number: number }): Issue => ({
+  repo: REPO,
   title: `issue ${over.number}`,
   url: `https://example.test/${over.number}`,
   state: "open",
   assignees: [],
   blockedBy: [],
   pr: null,
-  parent: 1,
+  parent: k(1),
   depth: 1,
   updatedAt: "2026-08-01T00:00:00Z",
   ...over,
 });
-export const blocker = (number: number, state: Blocker["state"] = "open"): Blocker => ({ number, title: `issue ${number}`, url: `https://example.test/${number}`, state });
-export const graph = (nodes: Issue[], over: Partial<Graph> = {}): Graph => ({ repo: "o/r", viewer: "phillip", epic: node({ number: 1, depth: 0, parent: null }), nodes, ...over });
+export const blocker = (number: number, state: Blocker["state"] = "open", repo = REPO): Blocker => ({ repo, number, title: `issue ${number}`, url: `https://example.test/${number}`, state });
+export const graph = (nodes: Issue[], over: Partial<Graph> = {}): Graph => ({ repo: REPO, viewer: "phillip", epic: node({ number: 1, depth: 0, parent: null }), nodes, related: [], ...over });
 
 const g0 = graph([]);
 
@@ -41,9 +45,9 @@ describe("categorize", () => {
     expect(categorize(node({ number: 2 }), g0)).toBe("ready");
   });
   test("a parent is blocked by its open sub-issues; free once they are all closed", () => {
-    const open = graph([node({ number: 2 }), node({ number: 3, parent: 2, depth: 2 }), node({ number: 4, parent: 2, depth: 2, state: "closed" })]);
+    const open = graph([node({ number: 2 }), node({ number: 3, parent: k(2), depth: 2 }), node({ number: 4, parent: k(2), depth: 2, state: "closed" })]);
     expect(categorize(open.nodes[0]!, open)).toBe("blocked");
-    const closed = graph([node({ number: 2 }), node({ number: 3, parent: 2, depth: 2, state: "closed" })]);
+    const closed = graph([node({ number: 2 }), node({ number: 3, parent: k(2), depth: 2, state: "closed" })]);
     expect(categorize(closed.nodes[0]!, closed)).toBe("ready");
   });
 });
@@ -65,6 +69,17 @@ describe("readyNodes", () => {
   });
   test("--include-assigned keeps human-assigned issues", () => {
     expect(readyNodes(g, { includeAssigned: true }).map((n) => n.number)).toEqual([2, 4, 6]);
+  });
+});
+
+describe("keyOf / refLabel", () => {
+  test("a key is repo-qualified, always", () => {
+    expect(keyOf(node({ number: 7 }))).toBe("o/r#7");
+    expect(keyOf(blocker(7, "open", "other/repo"))).toBe("other/repo#7");
+  });
+  test("a label abbreviates to #N only in the root repo", () => {
+    expect(refLabel(node({ number: 7 }), REPO)).toBe("#7");
+    expect(refLabel(blocker(7, "open", "other/repo"), REPO)).toBe("other/repo#7");
   });
 });
 

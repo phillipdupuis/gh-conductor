@@ -4,7 +4,16 @@ import type { Blocker, Category, Graph, Issue, Pr, RawPr } from "./schema.ts";
 
 export type { Blocker, Category, Graph, Issue, Pr, RawPr } from "./schema.ts";
 
-/** "blocked by #3, #9 and 2 open sub-issues" — the `#N` are formatted by the caller. */
+/**
+ * The one identity for an issue everywhere in this codebase: "owner/repo#123". Node ids, map keys,
+ * parent links and layer members are all this string, so two repos' #7 can never collide.
+ */
+export const keyOf = (n: { repo: string; number: number }): string => `${n.repo}#${n.number}`;
+
+/** How GitHub writes a reference: "#7" in its own repo, "owner/repo#7" from anywhere else. */
+export const refLabel = (n: { repo: string; number: number }, rootRepo: string): string => (n.repo === rootRepo ? `#${n.number}` : `${n.repo}#${n.number}`);
+
+/** "blocked by #3, #9 and 2 open sub-issues" — the refs are formatted by the caller. */
 export function blockedByText(n: Issue, g: Graph, ref: (b: Blocker) => string): string | null {
   const open = openBlockers(n).map(ref);
   const kids = openChildren(n, g).length;
@@ -17,18 +26,18 @@ export function openBlockers(n: Issue): Blocker[] {
   return n.blockedBy.filter((b) => b.state === "open");
 }
 
-/** Direct sub-issues of every issue (the epic included), in graph order. */
-export function childrenOf(g: Graph): Map<number, Issue[]> {
-  const out = new Map<number, Issue[]>();
+/** Direct sub-issues of every issue (the epic included), keyed by parent, in graph order. */
+export function childrenOf(g: Graph): Map<string, Issue[]> {
+  const out = new Map<string, Issue[]>();
   for (const n of g.nodes) {
-    const key = n.parent ?? g.epic.number;
+    const key = n.parent ?? keyOf(g.epic);
     out.set(key, [...(out.get(key) ?? []), n]);
   }
   return out;
 }
 
 export function openChildren(n: Issue, g: Graph): Issue[] {
-  return (childrenOf(g).get(n.number) ?? []).filter((c) => c.state === "open");
+  return (childrenOf(g).get(keyOf(n)) ?? []).filter((c) => c.state === "open");
 }
 
 export function isUnblocked(n: Issue, g: Graph): boolean {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { currentView, useAppStore } from "./store.ts";
-import { categorize } from "../core/graph.ts";
+import { categorize, keyOf } from "../core/graph.ts";
 import { layersOf } from "../core/layers.ts";
 import { layoutGraph } from "../core/layout.ts";
 import type { Category, Issue } from "../core/schema.ts";
@@ -10,7 +10,7 @@ import { Header } from "./components/Header.tsx";
 import { IssueSheet } from "./components/IssueSheet.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
 
-type Layers = { layers: number[][]; error: null } | { layers: null; error: string };
+type Layers = { layers: string[][]; error: null } | { layers: null; error: string };
 
 export function App() {
   const epic = useAppStore((s) => s.epic);
@@ -33,9 +33,9 @@ export function App() {
   }, [view]);
 
   const categories = useMemo(() => {
-    const out = new Map<number, Category>();
+    const out = new Map<string, Category>();
     if (!view) return out;
-    for (const n of view.graph.nodes) out.set(n.number, categorize(n, view.graph));
+    for (const n of [...view.graph.nodes, ...view.graph.related]) out.set(keyOf(n), categorize(n, view.graph));
     return out;
   }, [view]);
 
@@ -43,10 +43,9 @@ export function App() {
   const traced: Trace | null = useMemo(() => (hover !== null && adj ? trace(hover, adj) : null), [hover, adj]);
 
   const issues = useMemo(() => {
-    const out = new Map<number, Issue>();
+    const out = new Map<string, Issue>();
     if (!view) return out;
-    out.set(view.graph.epic.number, view.graph.epic);
-    for (const n of view.graph.nodes) out.set(n.number, n);
+    for (const n of [view.graph.epic, ...view.graph.nodes, ...view.graph.related]) out.set(keyOf(n), n);
     return out;
   }, [view]);
 

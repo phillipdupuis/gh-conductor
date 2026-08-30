@@ -20,18 +20,19 @@ import {
   TOGGLE_OVERLAP,
   TOGGLE_WIDTH,
 } from "./constants.ts";
+import { keyOf } from "./graph.ts";
 import type { Graph } from "./schema.ts";
 
 /** Top-left origin, px (React Flow's convention). */
 export type Box = { x: number; y: number; width: number; height: number };
 
-export type IssuePlacement = Box & { number: number; layer: number };
+export type IssuePlacement = Box & { key: string; layer: number };
 
 export type LayerMode = "single" | "collapsed" | "expanded";
 
 export type LayerPlacement = {
   layer: number;
-  issues: number[];
+  issues: string[];
   mode: LayerMode;
   /** Top of the row and its height. */
   y: number;
@@ -47,10 +48,11 @@ export type LayerPlacement = {
 export type EdgeKind = "blocking" | "tree";
 
 /**
- * An edge between representatives: an issue node id (`String(number)`) or a collapsed layer
- * (`layer-<i>`). Several issue-level edges can collapse into one; `pairs` keeps them for the trace.
+ * An edge between representatives: an issue node id (its key) or a collapsed layer (`layer-<i>`).
+ * Keys always contain a "#", so the two id spaces cannot collide. Several issue-level edges can
+ * collapse into one; `pairs` keeps them for the trace.
  */
-export type LayoutEdge = { id: string; source: string; target: string; kind: EdgeKind; pairs: [number, number][] };
+export type LayoutEdge = { id: string; source: string; target: string; kind: EdgeKind; pairs: [string, string][] };
 
 export type Layout = { issues: IssuePlacement[]; layers: LayerPlacement[]; edges: LayoutEdge[] };
 
@@ -78,22 +80,22 @@ export function boundsOf(layout: Layout): { minX: number; minY: number; maxX: nu
   return minX === Infinity ? { minX: 0, minY: 0, maxX: 0, maxY: 0 } : { minX, minY, maxX, maxY };
 }
 
-export const isCollapsible = (layer: number[]) => layer.length > COLLAPSE_THRESHOLD;
+export const isCollapsible = (layer: string[]) => layer.length > COLLAPSE_THRESHOLD;
 
-export function layerMode(layer: number[], index: number, expanded: ReadonlySet<number>): LayerMode {
+export function layerMode(layer: string[], index: number, expanded: ReadonlySet<number>): LayerMode {
   if (!isCollapsible(layer)) return "single";
   return expanded.has(index) ? "expanded" : "collapsed";
 }
 
-export function rowHeight(layer: number[], mode: LayerMode): number {
+export function rowHeight(layer: string[], mode: LayerMode): number {
   if (mode === "collapsed") return Math.min(layer.length, MAX_VISIBLE_ROWS) * ROW_HEIGHT + FOOTER_HEIGHT;
   return mode === "expanded" ? NODE_HEIGHT + 2 * FRAME_PAD : NODE_HEIGHT;
 }
 
-export function layoutGraph(g: Graph, layers: number[][], expanded: ReadonlySet<number>): Layout {
+export function layoutGraph(g: Graph, layers: string[][], expanded: ReadonlySet<number>): Layout {
   const issues: IssuePlacement[] = [];
   const placements: LayerPlacement[] = [];
-  const rep = new Map<number, string>();
+  const rep = new Map<string, string>();
 
   // Rows, top (last layer) to bottom (layer 0).
   let y = 0;
@@ -112,8 +114,8 @@ export function layoutGraph(g: Graph, layers: number[][], expanded: ReadonlySet<
       const x0 = -span / 2;
       const pad = mode === "expanded" ? FRAME_PAD : 0;
       layer.forEach((n, j) => {
-        issues.push({ number: n, layer: i, x: x0 + j * (NODE_WIDTH + GAP_X), y: y + pad, width: NODE_WIDTH, height: NODE_HEIGHT });
-        rep.set(n, String(n));
+        issues.push({ key: n, layer: i, x: x0 + j * (NODE_WIDTH + GAP_X), y: y + pad, width: NODE_WIDTH, height: NODE_HEIGHT });
+        rep.set(n, n);
       });
       if (mode === "expanded") {
         frame = { x: x0 - pad, y, width: span + 2 * pad, height };
@@ -127,7 +129,7 @@ export function layoutGraph(g: Graph, layers: number[][], expanded: ReadonlySet<
 
   // Edges between representatives. Same-layer edges can't exist: an edge always crosses upward.
   const edges = new Map<string, LayoutEdge>();
-  const add = (from: number, to: number, kind: EdgeKind) => {
+  const add = (from: string, to: string, kind: EdgeKind) => {
     const source = rep.get(from);
     const target = rep.get(to);
     if (!source || !target || source === target) return;
@@ -138,8 +140,8 @@ export function layoutGraph(g: Graph, layers: number[][], expanded: ReadonlySet<
       if (kind === "blocking") e.kind = "blocking";
     } else edges.set(id, { id, source, target, kind, pairs: [[from, to]] });
   };
-  for (const n of g.nodes) add(n.number, n.parent ?? g.epic.number, "tree");
-  for (const n of [g.epic, ...g.nodes]) for (const b of n.blockedBy) add(b.number, n.number, "blocking");
+  for (const n of g.nodes) add(keyOf(n), n.parent ?? keyOf(g.epic), "tree");
+  for (const n of [g.epic, ...g.nodes, ...g.related]) for (const b of n.blockedBy) add(keyOf(b), keyOf(n), "blocking");
 
   return { issues, layers: placements, edges: [...edges.values()] };
 }
