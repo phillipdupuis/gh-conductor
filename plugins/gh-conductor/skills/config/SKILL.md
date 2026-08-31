@@ -3,9 +3,7 @@ name: config
 description: Configure how gh-conductor behaves — settings and preferences for this user and workspace. Use on first run in a workspace with no .gh-conductor.toml, when the user complains about or pushes back on how the orchestrator works, or when a one-off correction sounds like it should become permanent.
 ---
 
-> **Stub.** Steps are placeholders. This is the one meta-skill: it configures the other four
-> (`plan` · `clarify` · `delegate` · `advance`) rather than pushing work forward, so it deviates
-> from the single-PM-verb naming on purpose.
+> **Stub.** Steps are placeholders.
 
 **Moment:** first run in a workspace (onboarding), and any time the user is unhappy with a
 behavior that a preference could fix.
@@ -28,4 +26,4 @@ file (via the CLI — never read or write `.gh-conductor.toml` directly).
 4. **Precedence: proximate wins.** In-session instructions > the user's CLAUDE.md > workspace
    config > shipped defaults. Cross-layer conflicts resolve silently in that order — never ask.
    Ask only when two instructions *within* a layer contradict each other.
-5. **(future)** Offer the settings form in the web UI for see-everything-edit-yourself (GUI surfaces may say "Settings"; everywhere else the word is config).
+5. **(future)** Offer the settings form in the web UI for see-everything-edit-yourself.
