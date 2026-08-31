@@ -67,7 +67,7 @@ describe("refresh", () => {
     globalThis.fetch = original;
   });
 
-  test("no epic → no fetch, no state change", async () => {
+  test("no issue → no fetch, no state change", async () => {
     stub(() => {
       throw new Error("should not fetch");
     });

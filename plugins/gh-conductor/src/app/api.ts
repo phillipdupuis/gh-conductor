@@ -3,16 +3,16 @@
 
 import { Health, ViewModel } from "../core/schema.ts";
 
-export type EpicPath = { owner: string; repo: string; number: number };
+export type IssuePath = { owner: string; repo: string; number: number };
 
-/** Raw route params → EpicPath; `false` rejects the match (router falls through to not-found). */
-export function parseEpicParams(p: { owner: string; repo: string; number: string }): EpicPath | false {
+/** Raw route params → IssuePath; `false` rejects the match (router falls through to not-found). */
+export function parseIssueParams(p: { owner: string; repo: string; number: string }): IssuePath | false {
   if (!/^\d+$/.test(p.number)) return false;
   return { owner: p.owner, repo: p.repo, number: Number(p.number) };
 }
 
-export async function fetchView(p: EpicPath): Promise<ViewModel> {
-  const res = await fetch(`/api/epics/${encodeURIComponent(p.owner)}/${encodeURIComponent(p.repo)}/${p.number}`);
+export async function fetchView(p: IssuePath): Promise<ViewModel> {
+  const res = await fetch(`/api/issues/${encodeURIComponent(p.owner)}/${encodeURIComponent(p.repo)}/${p.number}`);
   if (!res.ok) {
     let message = `${res.status} ${res.statusText}`;
     try {

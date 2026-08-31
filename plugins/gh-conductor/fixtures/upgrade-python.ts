@@ -1,4 +1,4 @@
-// Mock epic for stress-testing the renderers: "Upgrade Python version" at a fictional data-pipeline
+// Mock issue tree for stress-testing the renderers: "Upgrade Python version" at a fictional data-pipeline
 // SaaS (core infra + 10 customers), captured at three moments. Nothing here is real except the
 // viewer's login; links go nowhere. `bun run fixtures` writes the JSON files next to this module.
 
@@ -9,11 +9,11 @@ export const STAGES: Stage[] = ["early", "mid", "late"];
 
 const REPO = "northbeam/platform";
 const VIEWER = "phillipdupuis";
-const EPIC = 120;
+const ROOT = 120;
 /** Devops-sprint issue in another repo: the upgrade switches pip → uv, so no code starts until it ships. */
 const UV = 57;
 const UV_REPO = "northbeam/devops";
-/** Downstream of the whole epic: nothing in the tree waits on it, it waits on the last tree node. */
+/** Downstream of the whole tree: nothing in the tree waits on it, it waits on the last tree node. */
 const DOCS = 145;
 
 const repoOf = (n: number): string => (n === UV ? UV_REPO : REPO);
@@ -24,25 +24,25 @@ const CUSTOMERS = ["Halcyon Freight", "Bluefin Grocers", "Orrin Health", "Tidewa
 type Spec = { number: number; title: string; parent: number; blockedBy?: number[] };
 
 const SPECS: Spec[] = [
-  { number: 121, title: "Target versions", parent: EPIC },
+  { number: 121, title: "Target versions", parent: ROOT },
   { number: 122, title: "Decide: Python target version", parent: 121 },
   { number: 123, title: "Audit dependencies for compatibility with the target", parent: 121, blockedBy: [122] },
   { number: 124, title: "Decide: dependency target versions (pandas, numpy, SQLAlchemy, pyarrow)", parent: 121, blockedBy: [123] },
-  { number: 125, title: "Risk & regression plan", parent: EPIC },
+  { number: 125, title: "Risk & regression plan", parent: ROOT },
   { number: 126, title: "Enumerate breaking changes and risks", parent: 125, blockedBy: [121] },
   { number: 127, title: "Regression test plan: core infra", parent: 125, blockedBy: [126] },
   { number: 128, title: "Regression test plan: customer code", parent: 125, blockedBy: [126] },
-  { number: 129, title: "Upgrade core infra to target versions", parent: EPIC, blockedBy: [125, UV] },
-  { number: 130, title: "Customer migrations", parent: EPIC },
+  { number: 129, title: "Upgrade core infra to target versions", parent: ROOT, blockedBy: [125, UV] },
+  { number: 130, title: "Customer migrations", parent: ROOT },
   ...CUSTOMERS.map((c, i) => ({ number: 131 + i, title: `Migrate ${c} to target versions`, parent: 130, blockedBy: [129] })),
-  { number: 141, title: "Retire old Python runtime (base images, CI matrix, compat shims)", parent: EPIC, blockedBy: [130] },
+  { number: 141, title: "Retire old Python runtime (base images, CI matrix, compat shims)", parent: ROOT, blockedBy: [130] },
 ];
 
-/** Reached from the tree by one blocked-by hop, in either direction; neither is a sub-issue of the epic. */
+/** Reached from the tree by one blocked-by hop, in either direction; neither is a sub-issue of the root. */
 const RELATED: { number: number; blockedBy?: number[] }[] = [{ number: UV }, { number: DOCS, blockedBy: [141] }];
 
 const TITLES: Record<number, string> = {
-  [EPIC]: "Upgrade Python version",
+  [ROOT]: "Upgrade Python version",
   [UV]: "Add uv to platform",
   [DOCS]: "Update public docs for the new Python",
   ...Object.fromEntries(SPECS.map((s) => [s.number, s.title])),
@@ -106,7 +106,7 @@ export function upgradePython(stage: Stage): Graph {
   const stateOf = (n: number): IssueState => status[n]?.state ?? "open";
   const url = (n: number) => `https://github.com/${repoOf(n)}/issues/${n}`;
   const blocker = (n: number): Blocker => ({ repo: repoOf(n), number: n, title: TITLES[n]!, url: url(n), state: stateOf(n) });
-  const depth = (s: Spec): number => (s.parent === EPIC ? 1 : 2);
+  const depth = (s: Spec): number => (s.parent === ROOT ? 1 : 2);
   const node = (s: Spec): Issue => ({
     repo: REPO,
     number: s.number,
@@ -140,8 +140,8 @@ export function upgradePython(stage: Stage): Graph {
   return {
     repo: REPO,
     viewer: VIEWER,
-    epic: { repo: REPO, number: EPIC, title: TITLES[EPIC]!, url: url(EPIC), state: "open", assignees: [], blockedBy: [], pr: null, parent: null, depth: 0, updatedAt: updatedAt(EPIC, stage) },
-    nodes: walk(EPIC),
+    root: { repo: REPO, number: ROOT, title: TITLES[ROOT]!, url: url(ROOT), state: "open", assignees: [], blockedBy: [], pr: null, parent: null, depth: 0, updatedAt: updatedAt(ROOT, stage) },
+    nodes: walk(ROOT),
     related: [...RELATED].sort((a, b) => key(a.number).localeCompare(key(b.number))).map(related),
   };
 }

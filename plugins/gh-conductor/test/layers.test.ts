@@ -25,13 +25,13 @@ describe("layersOf (upgrade-python-mid)", () => {
     expect(new Set(migrations.map((n) => at.get(n))).size).toBe(1);
     expect(layers[at.get(k(131))!]).toEqual(migrations);
   });
-  test("the epic is alone in its layer, under the work that waits on the whole epic", () => {
+  test("the root is alone in its layer, under the work that waits on the whole tree", () => {
     expect(layers[layers.length - 1]).toEqual([k(145)]);
     expect(layers[layers.length - 2]).toEqual([k(120)]);
   });
   test("every issue is in exactly one layer, in graph order", () => {
     expect(layers.flat().sort()).toEqual([k(120), ...g.nodes.map(keyOf), ...g.related.map(keyOf)].sort());
-    const order = new Map([g.epic, ...g.nodes, ...g.related].map((n, i) => [keyOf(n), i]));
+    const order = new Map([g.root, ...g.nodes, ...g.related].map((n, i) => [keyOf(n), i]));
     for (const layer of layers) expect([...layer].sort((a, b) => order.get(a)! - order.get(b)!)).toEqual(layer);
   });
   test("a blocker with slack floats up to just below its only dependent", () => {
@@ -40,7 +40,7 @@ describe("layersOf (upgrade-python-mid)", () => {
     expect(at.get(k(57, "northbeam/devops"))).toBe(at.get(k(129))! - 1);
     expect(at.get(k(129))!).toBe(at.get(k(125))! + 1);
   });
-  test("a related issue nothing here waits on bands one above the epic", () => {
+  test("a related issue nothing here waits on bands one above the root", () => {
     expect(at.get(k(145))).toBe(at.get(k(120))! + 1);
   });
 });
@@ -60,8 +60,8 @@ describe("as late as possible", () => {
     });
     // #2 → #3 → #4 → #5 is the critical path; #9 has no blockers but only #5 needs it.
     const nodes = [issue(2, []), issue(3, [2]), issue(4, [3]), issue(5, [4, 9]), issue(9, [])];
-    const epic: Issue = { ...issue(1, []), parent: null, depth: 0 };
-    const at2 = layerOf(layersOf({ repo: "o/r", viewer: null, epic, nodes, related: [] }));
+    const root: Issue = { ...issue(1, []), parent: null, depth: 0 };
+    const at2 = layerOf(layersOf({ repo: "o/r", viewer: null, root, nodes, related: [] }));
     expect([2, 3, 4, 5].map((n) => at2.get(`o/r#${n}`))).toEqual([0, 1, 2, 3]);
     expect(at2.get("o/r#9")).toBe(at2.get("o/r#5")! - 1);
   });

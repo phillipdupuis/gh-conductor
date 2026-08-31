@@ -113,7 +113,7 @@ function toIssue(raw: RawIssue, parent: string | null, depth: number): Issue {
  * `blocking`. Anything the tree doesn't already contain becomes a `related` node, carrying its own
  * one-level blockers so its category is honest. Those blockers are refs only — one hop, no further.
  */
-export async function loadGraph(repo: Repo, epicNumber: number): Promise<Graph> {
+export async function loadGraph(repo: Repo, rootNumber: number): Promise<Graph> {
   const nodes: Issue[] = [];
   const deps: RawDep[] = [];
   const visit = async (raw: RawIssue, parent: string | null, depth: number): Promise<Issue> => {
@@ -124,10 +124,10 @@ export async function loadGraph(repo: Repo, epicNumber: number): Promise<Graph> 
     for (const child of children) await visit(child, keyOf(node), depth + 1);
     return node;
   };
-  const root = await fetchIssue(repo, epicNumber);
-  const epic = await visit(root.issue, null, 0);
+  const fetched = await fetchIssue(repo, rootNumber);
+  const root = await visit(fetched.issue, null, 0);
 
-  const treeKeys = new Set([epic, ...nodes].map(keyOf));
+  const treeKeys = new Set([root, ...nodes].map(keyOf));
   const related = new Map<string, Issue>();
   for (const d of deps) {
     const key = `${d.repository.nameWithOwner}#${d.number}`;
@@ -135,8 +135,8 @@ export async function loadGraph(repo: Repo, epicNumber: number): Promise<Graph> 
   }
   return {
     repo: `${repo.owner}/${repo.name}`,
-    viewer: root.viewer,
-    epic,
+    viewer: fetched.viewer,
+    root,
     nodes,
     related: [...related.keys()].sort().map((k) => related.get(k)!),
   };

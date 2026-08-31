@@ -1,7 +1,7 @@
-// gh-conductor — read-only view of an epic. Never writes to GitHub.
+// gh-conductor — read-only view of an issue. Never writes to GitHub.
 
 import { parseArgs } from "node:util";
-import { parseEpicRef } from "../core/args.ts";
+import { parseIssueRef } from "../core/args.ts";
 import { PRECEDENCE_NOTE, type SettingKey, effectiveConfig, settingKeys } from "../core/config.ts";
 import { findConfigPath, loadConfigFile, setSetting } from "./config.ts";
 import { categorize, readyNodes } from "../core/graph.ts";
@@ -13,23 +13,23 @@ import { ensureServer, stopServer } from "./daemon.ts";
 import { openPath } from "./open.ts";
 import { renderGraph, renderReady, renderStatus } from "./render.ts";
 
-const USAGE = `usage: gh-conductor <command> <epic> [--repo owner/name] [--json]
+const USAGE = `usage: gh-conductor <command> <issue> [--repo owner/name] [--json]
        gh-conductor <command> --from <graph.json>
        gh-conductor serve [--port N] [--from <graph.json>] [--stop]
        gh-conductor config [set <key> <value> [--confirmed]]
 
-<epic> is an issue number, #N, owner/repo#N, or a GitHub issue URL. The URL and
+<issue> is an issue number, #N, owner/repo#N, or a GitHub issue URL. The URL and
 owner/repo#N forms set the repo; otherwise --repo, $GH_REPO, or the current directory.
---from reads a graph saved by \`gh-conductor graph <epic> --json\` (or a fixture) instead of GitHub.
+--from reads a graph saved by \`gh-conductor graph <issue> --json\` (or a fixture) instead of GitHub.
 
 commands:
-  graph   <epic>   every sub-issue, plus the issues one blocked-by hop away, with state, assignees,
+  graph   <issue>  every sub-issue, plus the issues one blocked-by hop away, with state, assignees,
                    blockers and linked PR (--dot for Graphviz source)
-  ready   <epic>   open sub-issues whose blockers are all closed (add --include-assigned to keep human-assigned ones)
-  status  <epic>   ready / in progress / in review / assigned / blocked / done
-  view    <epic>   open the epic's graph in the browser (starts the local server if needed); prints the URL.
+  ready   <issue>  open sub-issues whose blockers are all closed (add --include-assigned to keep human-assigned ones)
+  status  <issue>  ready / in progress / in review / assigned / blocked / done
+  view    <issue>  open the issue's graph in the browser (starts the local server if needed); prints the URL.
                    --no-open just prints.
-  serve            run the graph server in the foreground (dev). --from serves a saved graph for any epic.
+  serve            run the graph server in the foreground (dev). --from serves a saved graph for any issue.
                    --stop stops the background server started by \`view\`.
   config           effective preferences and where each came from (--json for machines)
   config set <key> <value>
@@ -39,10 +39,10 @@ commands:
 Never writes to GitHub (\`config set\` writes only the local .gh-conductor.toml).
 Requires gh (>= 2.94) authenticated for the repo.`;
 
-async function resolveEpic(epicArg: string | undefined, repoFlag: string | undefined): Promise<{ repo: Repo; number: number } | null> {
-  const ref = parseEpicRef(epicArg);
+async function resolveIssue(issueArg: string | undefined, repoFlag: string | undefined): Promise<{ repo: Repo; number: number } | null> {
+  const ref = parseIssueRef(issueArg);
   if (!ref) {
-    console.error(`error: expected an epic issue number or URL, got "${epicArg ?? ""}"\n\n${USAGE}`);
+    console.error(`error: expected an issue number or URL, got "${issueArg ?? ""}"\n\n${USAGE}`);
     return null;
   }
   return { repo: await resolveRepo(ref.repo ?? repoFlag), number: ref.number };
@@ -69,7 +69,7 @@ export async function main(argv: string[]): Promise<number> {
       help: { type: "boolean", short: "h", default: false },
     },
   });
-  const [cmd, epicArg] = positionals;
+  const [cmd, issueArg] = positionals;
   if (values.help || !cmd) {
     console.log(USAGE);
     return values.help ? 0 : 2;
@@ -88,10 +88,10 @@ export async function main(argv: string[]): Promise<number> {
   }
 
   if (cmd === "view") {
-    const epic = await resolveEpic(epicArg, values.repo);
-    if (!epic) return 2;
+    const issue = await resolveIssue(issueArg, values.repo);
+    if (!issue) return 2;
     const { port } = await ensureServer();
-    const url = `http://localhost:${port}/${epic.repo.owner}/${epic.repo.name}/${epic.number}`;
+    const url = `http://localhost:${port}/${issue.repo.owner}/${issue.repo.name}/${issue.number}`;
     console.log(url);
     if (!values["no-open"]) await openPath(url);
     return 0;
@@ -133,9 +133,9 @@ export async function main(argv: string[]): Promise<number> {
   let graph: Graph;
   if (values.from) graph = await readGraph(values.from);
   else {
-    const epic = await resolveEpic(epicArg, values.repo);
-    if (!epic) return 2;
-    graph = await loadGraph(epic.repo, epic.number);
+    const issue = await resolveIssue(issueArg, values.repo);
+    if (!issue) return 2;
+    graph = await loadGraph(issue.repo, issue.number);
   }
 
   switch (cmd) {
@@ -151,7 +151,7 @@ export async function main(argv: string[]): Promise<number> {
     case "status": {
       if (values.json) {
         const withCategory = (ns: Issue[]) => ns.map((n) => ({ ...n, category: categorize(n, graph) }));
-        console.log(JSON.stringify({ epic: graph.epic, nodes: withCategory(graph.nodes), related: withCategory(graph.related) }, null, 2));
+        console.log(JSON.stringify({ root: graph.root, nodes: withCategory(graph.nodes), related: withCategory(graph.related) }, null, 2));
       } else {
         console.log(renderStatus(graph));
       }

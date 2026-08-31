@@ -16,8 +16,8 @@ type Props = {
 };
 
 export function IssueSheet({ issue, graph, onClose, onSelect }: Props) {
-  const isEpic = issue !== null && keyOf(issue) === keyOf(graph.epic);
-  const inGraph = new Set([graph.epic, ...graph.nodes, ...graph.related].map(keyOf));
+  const isRoot = issue !== null && keyOf(issue) === keyOf(graph.root);
+  const inGraph = new Set([graph.root, ...graph.nodes, ...graph.related].map(keyOf));
   const blocks = issue ? [...graph.nodes, ...graph.related].filter((n) => n.blockedBy.some((b) => keyOf(b) === keyOf(issue))) : [];
   const children = issue ? (childrenOf(graph).get(keyOf(issue)) ?? []) : [];
 
@@ -55,7 +55,7 @@ export function IssueSheet({ issue, graph, onClose, onSelect }: Props) {
               </SheetTitle>
               <SheetDescription className="flex flex-wrap items-center gap-2">
                 <StatePill state={issue.state} />
-                {isEpic && <Badge variant="outline">epic</Badge>}
+                {isRoot && <Badge variant="outline">root</Badge>}
                 <span>updated {relativeTime(issue.updatedAt)}</span>
               </SheetDescription>
             </SheetHeader>

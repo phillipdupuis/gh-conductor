@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { createRootRoute, createRoute, createRouter, Outlet } from "@tanstack/react-router";
 import { App } from "./App.tsx";
-import { parseEpicParams, ping } from "./api.ts";
+import { parseIssueParams, ping } from "./api.ts";
 import { useAppStore } from "./store.ts";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 function Root() {
-  // The keepalive belongs to the app, not to any one epic: it must outlive route changes.
+  // The keepalive belongs to the app, not to any one issue: it must outlive route changes.
   useEffect(() => {
     const id = setInterval(() => void ping(), 60_000);
     return () => clearInterval(id);
@@ -25,7 +25,7 @@ function Landing() {
       <div className="max-w-md space-y-3 text-sm text-muted-foreground">
         <h1 className="text-lg font-semibold text-foreground">gh-conductor</h1>
         <p>
-          Open an epic with <code className="rounded bg-muted px-1 py-0.5">gh-conductor view &lt;epic&gt;</code>, or visit{" "}
+          Open an issue with <code className="rounded bg-muted px-1 py-0.5">gh-conductor view &lt;issue&gt;</code>, or visit{" "}
           <code className="rounded bg-muted px-1 py-0.5">/&lt;owner&gt;/&lt;repo&gt;/&lt;number&gt;</code>.
         </p>
       </div>
@@ -37,11 +37,11 @@ const rootRoute = createRootRoute({ component: Root, notFoundComponent: Landing 
 
 const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: Landing });
 
-const epicRoute = createRoute({
+const issueRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "$owner/$repo/$number",
   params: {
-    parse: parseEpicParams,
+    parse: parseIssueParams,
     stringify: (p) => ({ owner: p.owner, repo: p.repo, number: String(p.number) }),
   },
   // Fire-and-forget on purpose: awaiting would block the render behind the fetch, and the store's
@@ -54,7 +54,7 @@ const epicRoute = createRoute({
   component: App,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, epicRoute]);
+const routeTree = rootRoute.addChildren([indexRoute, issueRoute]);
 
 export const router = createRouter({ routeTree });
 

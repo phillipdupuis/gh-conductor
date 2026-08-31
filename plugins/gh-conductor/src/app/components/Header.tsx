@@ -1,5 +1,5 @@
 import { ExternalLink, FoldHorizontal, RefreshCw, UnfoldHorizontal } from "lucide-react";
-import type { EpicPath } from "../api.ts";
+import type { IssuePath } from "../api.ts";
 import { relativeTime } from "../../core/graph.ts";
 import { isCollapsible } from "../../core/layout.ts";
 import type { ViewModel } from "../../core/schema.ts";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type Props = {
-  epic: EpicPath;
+  issue: IssuePath;
   view: ViewModel | null;
   layers: string[][] | null;
   expanded: ReadonlySet<number>;
@@ -18,7 +18,7 @@ type Props = {
   onCollapseAll: () => void;
 };
 
-export function Header({ epic, view, layers, expanded, loading, error, onRefresh, onExpandAll, onCollapseAll }: Props) {
+export function Header({ issue, view, layers, expanded, loading, error, onRefresh, onExpandAll, onCollapseAll }: Props) {
   const collapsible = (layers ?? []).flatMap((l, i) => (isCollapsible(l) ? [i] : []));
   const allExpanded = collapsible.every((i) => expanded.has(i));
   const noneExpanded = !collapsible.some((i) => expanded.has(i));
@@ -28,19 +28,19 @@ export function Header({ epic, view, layers, expanded, loading, error, onRefresh
       <div className="min-w-0 flex-1">
         <h1 className="truncate text-base font-semibold">
           {view ? (
-            <a href={view.graph.epic.url} target="_blank" rel="noreferrer" className="hover:underline">
-              #{view.graph.epic.number} {view.graph.epic.title}
+            <a href={view.graph.root.url} target="_blank" rel="noreferrer" className="hover:underline">
+              #{view.graph.root.number} {view.graph.root.title}
             </a>
           ) : (
             <>
-              {epic.owner}/{epic.repo}#{epic.number}
+              {issue.owner}/{issue.repo}#{issue.number}
             </>
           )}
         </h1>
         <p className="truncate text-xs text-muted-foreground">
           {view ? (
             <>
-              {view.graph.repo} · {view.graph.epic.state} · loaded {relativeTime(view.generatedAt)}
+              {view.graph.repo} · {view.graph.root.state} · loaded {relativeTime(view.generatedAt)}
             </>
           ) : (
             " "
@@ -63,7 +63,7 @@ export function Header({ epic, view, layers, expanded, loading, error, onRefresh
       </Button>
       {view && (
         <Button variant="ghost" size="icon-sm" asChild>
-          <a href={view.graph.epic.url} target="_blank" rel="noreferrer" aria-label="Open epic on GitHub">
+          <a href={view.graph.root.url} target="_blank" rel="noreferrer" aria-label="Open issue on GitHub">
             <ExternalLink />
           </a>
         </Button>

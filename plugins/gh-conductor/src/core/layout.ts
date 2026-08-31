@@ -140,8 +140,8 @@ export function layoutGraph(g: Graph, layers: string[][], expanded: ReadonlySet<
       if (kind === "blocking") e.kind = "blocking";
     } else edges.set(id, { id, source, target, kind, pairs: [[from, to]] });
   };
-  for (const n of g.nodes) add(keyOf(n), n.parent ?? keyOf(g.epic), "tree");
-  for (const n of [g.epic, ...g.nodes, ...g.related]) for (const b of n.blockedBy) add(keyOf(b), keyOf(n), "blocking");
+  for (const n of g.nodes) add(keyOf(n), n.parent ?? keyOf(g.root), "tree");
+  for (const n of [g.root, ...g.nodes, ...g.related]) for (const b of n.blockedBy) add(keyOf(b), keyOf(n), "blocking");
 
   return { issues, layers: placements, edges: [...edges.values()] };
 }

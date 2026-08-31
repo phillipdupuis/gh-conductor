@@ -35,7 +35,7 @@ export const Issue = z.object({
   pr: Pr.nullable(),
   /** The parent's key, "owner/repo#N". */
   parent: z.string().nullable(),
-  /** 0 = epic */
+  /** 0 = the root issue */
   depth: z.number().int(),
   /** ISO 8601, from GitHub */
   updatedAt: z.string(),
@@ -43,12 +43,12 @@ export const Issue = z.object({
 export type Issue = z.infer<typeof Issue>;
 
 export const Graph = z.object({
-  /** "owner/name" — the epic's repo, and what `refLabel` abbreviates against. */
+  /** "owner/name" — the root issue's repo, and what `refLabel` abbreviates against. */
   repo: z.string(),
   /** Login of the `gh` user the graph was loaded as, or null if unknown. */
   viewer: z.string().nullable(),
-  epic: Issue,
-  /** Every descendant of the epic, depth-first in GitHub's sub-issue order. Excludes the epic. */
+  root: Issue,
+  /** Every descendant of the root, depth-first in GitHub's sub-issue order. Excludes the root. */
   nodes: z.array(Issue),
   /** Issues reached from the tree by one blocked-by hop, in either direction. Excludes tree nodes. */
   related: z.array(Issue),
@@ -125,7 +125,7 @@ export const GraphQlResponse = z.object({
 
 // ---- Server ↔ browser ----
 
-/** GET /api/epics/:owner/:repo/:number — layout happens in the browser (core/layout.ts). */
+/** GET /api/issues/:owner/:repo/:number — layout happens in the browser (core/layout.ts). */
 export const ViewModel = z.object({ graph: Graph, generatedAt: z.string() });
 export type ViewModel = z.infer<typeof ViewModel>;
 

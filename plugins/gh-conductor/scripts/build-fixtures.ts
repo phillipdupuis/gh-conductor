@@ -1,4 +1,4 @@
-// Write test/fixtures/*.json from their builders. Re-run after editing a builder; the fixtures test fails on drift.
+// Write fixtures/*.json from their builders. Re-run after editing a builder; the fixtures test fails on drift.
 import { fixturePath, STAGES, upgradePython } from "../fixtures/upgrade-python.ts";
 
 for (const stage of STAGES) {

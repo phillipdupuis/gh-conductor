@@ -15,7 +15,7 @@ const nodeTypes: NodeTypes = { issue: IssueNode, layer: LayerNode, layerFrame: L
 const PAD = 24;
 
 /**
- * The first viewport: horizontally centred, anchored to the top so the epic row is what you see,
+ * The first viewport: horizontally centred, anchored to the top so the root row is what you see,
  * and never zoomed below 0.75 (9px text) even when the graph is far wider than the pane. Wide
  * graphs are meant to be scrolled, not shrunk until unreadable.
  */
@@ -41,13 +41,13 @@ type Props = {
 };
 
 /** Primer dark state colors, for the minimap only (nodes use the CSS vars). */
-const STATUS_COLOR: Record<Category | "epic", string> = {
+const STATUS_COLOR: Record<Category | "root", string> = {
   ready: "#3fb950",
   in_progress: "#8b949e",
   waiting: "#d29922",
   blocked: "#6e7681",
   done: "#a371f7",
-  epic: "#161b22",
+  root: "#161b22",
 };
 
 /**
@@ -74,7 +74,7 @@ function placed(b: Box, withHandles: boolean) {
 
 export function GraphCanvas({ graph, layout, categories, traced, onHover, onSelect, onExpand, onCollapse }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
-  const issues = useMemo(() => new Map<string, Issue>([graph.epic, ...graph.nodes, ...graph.related].map((n) => [keyOf(n), n])), [graph]);
+  const issues = useMemo(() => new Map<string, Issue>([graph.root, ...graph.nodes, ...graph.related].map((n) => [keyOf(n), n])), [graph]);
 
   const nodes = useMemo<FlowNode[]>(() => {
     const out: FlowNode[] = [];
@@ -83,7 +83,7 @@ export function GraphCanvas({ graph, layout, categories, traced, onHover, onSele
     for (const p of layout.issues) {
       const issue = issues.get(p.key);
       if (!issue) continue;
-      const category: Category | "epic" = p.key === keyOf(graph.epic) ? "epic" : (categories.get(p.key) ?? "blocked");
+      const category: Category | "root" = p.key === keyOf(graph.root) ? "root" : (categories.get(p.key) ?? "blocked");
       out.push({
         id: p.key,
         type: "issue",

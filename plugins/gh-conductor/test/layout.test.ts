@@ -111,7 +111,7 @@ describe("boundsOf", () => {
     expect(boundsOf(layout)).toEqual({ minX: -110, minY: 64, maxX: 110, maxY: 120 });
   });
 
-  test("bounds of a real layout start at the epic row's top edge", () => {
+  test("bounds of a real layout start at the root row's top edge", () => {
     const real = layoutGraph(g, layers, new Set());
     const b = boundsOf(real);
     expect(b.minY).toBe(0); // the topmost row sits at y = 0

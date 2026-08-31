@@ -1,7 +1,7 @@
 {
   "repo": "northbeam/platform",
   "viewer": "phillipdupuis",
-  "epic": {
+  "root": {
     "repo": "northbeam/platform",
     "number": 120,
     "title": "Upgrade Python version",

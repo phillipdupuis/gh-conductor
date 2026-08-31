@@ -5,7 +5,7 @@ import { statusColor } from "../lib/categories.ts";
 import { AvatarStack, PrChip, StatusIcon } from "./StatusIcon.tsx";
 import { cn } from "@/lib/utils";
 
-export type IssueNodeData = { issue: Issue; category: Category | "epic"; rootRepo: string; dim: boolean; focus: boolean };
+export type IssueNodeData = { issue: Issue; category: Category | "root"; rootRepo: string; dim: boolean; focus: boolean };
 export type IssueFlowNode = Node<IssueNodeData, "issue">;
 
 /** Status is the border color (+ octicon), never a fill: the interior stays high-contrast card. */
@@ -20,12 +20,12 @@ export function IssueNode({ data }: NodeProps<IssueFlowNode>) {
         dim && "opacity-20",
         focus && "ring-2 ring-ring ring-offset-2 ring-offset-background",
       )}
-      style={{ borderColor: category === "epic" ? "var(--muted-foreground)" : ready ? "transparent" : statusColor(category, issue) }}
+      style={{ borderColor: category === "root" ? "var(--muted-foreground)" : ready ? "transparent" : statusColor(category, issue) }}
     >
       {ready && <AntsBorder />}
       <Handle type="target" position={Position.Bottom} />
       <Handle type="source" position={Position.Top} />
-      {category !== "epic" && <StatusIcon category={category} issue={issue} />}
+      {category !== "root" && <StatusIcon category={category} issue={issue} />}
       <span className="line-clamp-2 min-w-0 flex-1 break-words">
         <span className="font-semibold text-muted-foreground">{refLabel(issue, rootRepo)}</span> {issue.title}
       </span>

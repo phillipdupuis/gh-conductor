@@ -71,7 +71,7 @@ export function toLayers(keys: string[], deps: Deps): string[][] {
  * Each layer lists issue keys in graph order (the depth-first sub-issue order the sidebar uses).
  */
 export function layersOf(g: Graph): string[][] {
-  const all = [g.epic, ...g.nodes, ...g.related];
+  const all = [g.root, ...g.nodes, ...g.related];
   const order = new Map(all.map((n, i) => [keyOf(n), i]));
   const deps: Deps = new Map(all.map((n) => [keyOf(n), new Set<string>()]));
   for (const n of all) {
@@ -81,11 +81,11 @@ export function layersOf(g: Graph): string[][] {
       if (order.has(bk) && bk !== k) (deps.get(k) as Set<string>).add(bk);
     }
   }
-  for (const n of g.nodes) (deps.get(n.parent ?? keyOf(g.epic)) as Set<string>).add(keyOf(n));
+  for (const n of g.nodes) (deps.get(n.parent ?? keyOf(g.root)) as Set<string>).add(keyOf(n));
   // A related issue nothing here is blocked by has no dependent to hold it down, so it would tie
-  // with the epic's layer and read as parallel work. Make it depend on the epic: downstream of everything.
+  // with the root's layer and read as parallel work. Make it depend on the root: downstream of everything.
   const blockerKeys = new Set(all.flatMap((n) => n.blockedBy.map(keyOf).filter((k) => order.has(k))));
-  for (const x of g.related) if (!blockerKeys.has(keyOf(x))) (deps.get(keyOf(x)) as Set<string>).add(keyOf(g.epic));
+  for (const x of g.related) if (!blockerKeys.has(keyOf(x))) (deps.get(keyOf(x)) as Set<string>).add(keyOf(g.root));
   const byOrder = (a: string, b: string) => order.get(a)! - order.get(b)!;
   return toLayers([...order.keys()], deps).map((layer) => [...layer].sort(byOrder));
 }

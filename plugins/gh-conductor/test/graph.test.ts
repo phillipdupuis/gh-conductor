@@ -18,7 +18,7 @@ export const node = (over: Partial<Issue> & { number: number }): Issue => ({
   ...over,
 });
 export const blocker = (number: number, state: Blocker["state"] = "open", repo = REPO): Blocker => ({ repo, number, title: `issue ${number}`, url: `https://example.test/${number}`, state });
-export const graph = (nodes: Issue[], over: Partial<Graph> = {}): Graph => ({ repo: REPO, viewer: "phillip", epic: node({ number: 1, depth: 0, parent: null }), nodes, related: [], ...over });
+export const graph = (nodes: Issue[], over: Partial<Graph> = {}): Graph => ({ repo: REPO, viewer: "phillip", root: node({ number: 1, depth: 0, parent: null }), nodes, related: [], ...over });
 
 const g0 = graph([]);
 

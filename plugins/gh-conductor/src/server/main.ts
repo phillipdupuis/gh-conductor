@@ -15,7 +15,7 @@ const IDLE_MS = 10 * 60 * 1000;
 
 export type ServeOptions = {
   port: number;
-  /** Serve this saved graph for every epic instead of fetching from GitHub. */
+  /** Serve this saved graph for every issue instead of fetching from GitHub. */
   from?: string | undefined;
   /** Exit after IDLE_MS without a request (the detached daemon); false for the foreground dev server. */
   idle: boolean;
@@ -43,7 +43,7 @@ export async function serve(opts: ServeOptions) {
           const body: Health = { pid: process.pid, port: server.port ?? port, startedAt, root: ROOT };
           return Response.json(body);
         },
-        "/api/epics/:owner/:repo/:number": async (req) => {
+        "/api/issues/:owner/:repo/:number": async (req) => {
           touch();
           const { owner, repo, number } = req.params;
           const graph = await source.load({ owner, name: repo }, Number(number));

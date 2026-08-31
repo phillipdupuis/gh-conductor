@@ -1,7 +1,7 @@
 // All app state and every transition on it, outside React so it can be tested without a DOM.
 
 import { create } from "zustand";
-import { type EpicPath, fetchView } from "./api.ts";
+import { type IssuePath, fetchView } from "./api.ts";
 import { layersOf } from "../core/layers.ts";
 import { isCollapsible } from "../core/layout.ts";
 import type { ViewModel } from "../core/schema.ts";
@@ -9,7 +9,7 @@ import type { ViewModel } from "../core/schema.ts";
 export type Load = { status: "idle" } | { status: "loading"; prev: ViewModel | null } | { status: "ready"; view: ViewModel } | { status: "error"; message: string; prev: ViewModel | null };
 
 type State = {
-  epic: EpicPath | null;
+  issue: IssuePath | null;
   load: Load;
   hover: string | null;
   selected: string | null;
@@ -18,7 +18,7 @@ type State = {
 };
 
 type Actions = {
-  init: (epic: EpicPath | null) => void;
+  init: (issue: IssuePath | null) => void;
   refresh: () => Promise<void>;
   receiveView: (view: ViewModel) => void;
   setHover: (n: string | null) => void;
@@ -31,7 +31,7 @@ type Actions = {
 
 export type AppState = State & Actions;
 
-export const initialState: State = { epic: null, load: { status: "idle" }, hover: null, selected: null, expanded: new Set() };
+export const initialState: State = { issue: null, load: { status: "idle" }, hover: null, selected: null, expanded: new Set() };
 
 /** The graph on screen: the loaded one, or the one it is replacing. Never allocates — safe as a selector. */
 export function currentView(s: State): ViewModel | null {
@@ -41,14 +41,14 @@ export function currentView(s: State): ViewModel | null {
 export const useAppStore = create<AppState>()((set, get) => ({
   ...initialState,
 
-  init: (epic) => set({ epic }),
+  init: (issue) => set({ issue }),
 
   refresh: async () => {
-    const epic = get().epic;
-    if (!epic) return;
+    const issue = get().issue;
+    if (!issue) return;
     set((s) => ({ load: { status: "loading", prev: currentView(s) } }));
     try {
-      get().receiveView(await fetchView(epic));
+      get().receiveView(await fetchView(issue));
     } catch (err) {
       set((s) => ({ load: { status: "error", message: err instanceof Error ? err.message : String(err), prev: s.load.status === "loading" ? s.load.prev : null } }));
     }

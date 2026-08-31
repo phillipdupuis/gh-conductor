@@ -17,7 +17,7 @@ function line(n: Issue, g: Graph, indent = "  "): string {
 }
 
 function header(g: Graph): string {
-  return `#${g.epic.number} ${g.epic.title} — ${g.epic.state}`;
+  return `#${g.root.number} ${g.root.title} — ${g.root.state}`;
 }
 
 export function renderGraph(g: Graph): string {

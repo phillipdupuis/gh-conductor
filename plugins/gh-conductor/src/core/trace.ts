@@ -9,7 +9,7 @@ export type Adjacency = { up: Map<string, string[]>; down: Map<string, string[]>
 export function adjacency(g: Graph): Adjacency {
   const up = new Map<string, string[]>();
   const down = new Map<string, string[]>();
-  const all = [g.epic, ...g.nodes, ...g.related];
+  const all = [g.root, ...g.nodes, ...g.related];
   const inGraph = new Set(all.map(keyOf));
   for (const n of all) {
     const k = keyOf(n);

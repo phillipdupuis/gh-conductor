@@ -9,7 +9,7 @@ export function githubSource(): Source {
   return { load: (repo, number) => loadGraph(repo, number) };
 }
 
-/** Serves the same saved graph for every epic path, re-reading the file on each request so edits show up. */
+/** Serves the same saved graph for every issue path, re-reading the file on each request so edits show up. */
 export function fileSource(path: string): Source {
   return { load: async () => Graph.parse(JSON.parse(await Bun.file(path).text())) };
 }

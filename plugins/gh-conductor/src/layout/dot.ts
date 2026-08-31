@@ -1,15 +1,15 @@
 // Graph → Graphviz DOT. Pure; no I/O. `gh-conductor graph --dot` prints this for humans and external
 // tools; the app lays itself out (src/core/layout.ts) and does not use it.
 //
-// Shape: the epic sits near the top, the sink of its own tree — the last of that work to complete.
+// Shape: the root issue sits near the top, the sink of its own tree — the last of that work to complete.
 // Every edge means "must finish before" and points upward (rankdir=BT): explicit blocking
 // (blocker → blocked, bold) and containment (sub-issue → parent, muted — a parent is implicitly
-// blocked by its children). Bottom-to-top reads as time; the final pieces of work point at the epic.
+// blocked by its children). Bottom-to-top reads as time; the final pieces of work point at the root.
 // Dependency-reached issues are drawn like any other node; a reference to something the graph does
 // not draw is not an edge, and the referring node's tooltip names it "(not shown)".
 //
 // Styling rule: status is the fill color and nothing else. Every work node has the same border, every
-// blocking edge the same stroke; the epic node is neutral because it is not a work item. A node is
+// blocking edge the same stroke; the root node is neutral because it is not a work item. A node is
 // just its ref and title: assignee, PR, and age live in the page's sidebar and in the node tooltip,
 // never in shape or line style.
 
@@ -114,32 +114,32 @@ function nodeStmt(n: Issue, cat: Category, cls: string, g: Graph, inGraph: Set<s
 }
 
 export function toDot(g: Graph): string {
-  const drawn = [g.epic, ...g.nodes, ...g.related];
+  const drawn = [g.root, ...g.nodes, ...g.related];
   const inGraph = new Set(drawn.map(keyOf));
-  const e = g.epic;
+  const e = g.root;
 
   const out: string[] = [];
-  out.push(`digraph ${dq(`epic-${e.number}`)} {`);
+  out.push(`digraph ${dq(`issue-${e.number}`)} {`);
   out.push(`  rankdir=BT; bgcolor="transparent"; pad=0.3; nodesep=0.3; ranksep=0.7;`);
   // Fixed-size boxes (1 pt = 1 px in the app), so dot never has to guess text width and the
   // positions it emits match the React nodes exactly. Labels are still there for `graph --dot`.
   out.push(`  node [shape=box fixedsize=true width=${(NODE_WIDTH / 72).toFixed(4)} height=${(NODE_HEIGHT / 72).toFixed(4)} fontname="Arial" fontsize=10 penwidth=1];`)
   out.push(`  edge [fontname="Arial" arrowsize=1 color="${PALETTE.edge}" penwidth=1.8];`);
 
-  const epicAttrs = [
+  const rootAttrs = [
     `id="issue-${domId(keyOf(e))}"`,
-    `class="node epic"`,
+    `class="node root"`,
     `label=<${esc(refLabel(e, g.repo))} ${wrap(e.title)}>`,
     `URL=${dq(e.url)}`,
     `target="_blank"`,
-    `tooltip=${dq(`epic · ${e.state}`)}`,
+    `tooltip=${dq(`root · ${e.state}`)}`,
     `style="rounded,filled"`,
     `fillcolor=${dq(PALETTE.card)}`,
     `color=${dq(PALETTE.mute)}`,
     `fontcolor=${dq(PALETTE.fg)}`,
     `fontsize=11`,
   ];
-  out.push(`  ${dq(keyOf(e))} [${epicAttrs.join(" ")}];`);
+  out.push(`  ${dq(keyOf(e))} [${rootAttrs.join(" ")}];`);
   for (const n of [...g.nodes, ...g.related]) {
     const cat = categorize(n, g);
     out.push(`  ${nodeStmt(n, cat, `node ${cat}`, g, inGraph)}`);

@@ -13,7 +13,7 @@ import { Sidebar } from "./components/Sidebar.tsx";
 type Layers = { layers: string[][]; error: null } | { layers: null; error: string };
 
 export function App() {
-  const epic = useAppStore((s) => s.epic);
+  const issue = useAppStore((s) => s.issue);
   const load = useAppStore((s) => s.load);
   const hover = useAppStore((s) => s.hover);
   const selected = useAppStore((s) => s.selected);
@@ -29,7 +29,7 @@ export function App() {
   const collapseAll = useAppStore((s) => s.collapseAll);
 
   useEffect(() => {
-    if (view) document.title = `#${view.graph.epic.number} ${view.graph.epic.title} · gh-conductor`;
+    if (view) document.title = `#${view.graph.root.number} ${view.graph.root.title} · gh-conductor`;
   }, [view]);
 
   const categories = useMemo(() => {
@@ -45,7 +45,7 @@ export function App() {
   const issues = useMemo(() => {
     const out = new Map<string, Issue>();
     if (!view) return out;
-    for (const n of [view.graph.epic, ...view.graph.nodes, ...view.graph.related]) out.set(keyOf(n), n);
+    for (const n of [view.graph.root, ...view.graph.nodes, ...view.graph.related]) out.set(keyOf(n), n);
     return out;
   }, [view]);
 
@@ -61,13 +61,13 @@ export function App() {
   const layers = layered?.layers ?? null;
   const layout = useMemo(() => (view && layers ? layoutGraph(view.graph, layers, expanded) : null), [view, layers, expanded]);
 
-  // The route loader sets the epic before this ever renders; the guard only narrows the type.
-  if (!epic) return null;
+  // The route loader sets the issue before this ever renders; the guard only narrows the type.
+  if (!issue) return null;
 
   return (
     <div className="flex h-full flex-col">
       <Header
-        epic={epic}
+        issue={issue}
         view={view}
         layers={layers}
         expanded={expanded}
@@ -84,11 +84,11 @@ export function App() {
             {layout ? (
               <GraphCanvas graph={view.graph} layout={layout} categories={categories} traced={traced} onHover={setHover} onSelect={setSelected} onExpand={expand} onCollapse={collapse} />
             ) : (
-              <p className="m-auto max-w-md text-sm text-destructive">Can't lay out this epic: {layered?.error}</p>
+              <p className="m-auto max-w-md text-sm text-destructive">Can't lay out this issue: {layered?.error}</p>
             )}
           </>
         )}
-        {!view && load.status === "loading" && <p className="m-auto text-sm text-muted-foreground">Loading #{epic.number} from GitHub…</p>}
+        {!view && load.status === "loading" && <p className="m-auto text-sm text-muted-foreground">Loading #{issue.number} from GitHub…</p>}
       </div>
       {view && <IssueSheet issue={selected !== null ? (issues.get(selected) ?? null) : null} graph={view.graph} onClose={() => setSelected(null)} onSelect={setSelected} />}
     </div>

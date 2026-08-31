@@ -26,11 +26,11 @@ export function openBlockers(n: Issue): Blocker[] {
   return n.blockedBy.filter((b) => b.state === "open");
 }
 
-/** Direct sub-issues of every issue (the epic included), keyed by parent, in graph order. */
+/** Direct sub-issues of every issue (the root included), keyed by parent, in graph order. */
 export function childrenOf(g: Graph): Map<string, Issue[]> {
   const out = new Map<string, Issue[]>();
   for (const n of g.nodes) {
-    const key = n.parent ?? keyOf(g.epic);
+    const key = n.parent ?? keyOf(g.root);
     out.set(key, [...(out.get(key) ?? []), n]);
   }
   return out;
