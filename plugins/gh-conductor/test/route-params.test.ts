@@ -6,7 +6,7 @@ describe("parseEpicParams", () => {
     expect(parseEpicParams({ owner: "phillipdupuis", repo: "gh-conductor", number: "123" })).toEqual({ owner: "phillipdupuis", repo: "gh-conductor", number: 123 });
   });
 
-  /** `conductor serve --from` prints /local/graph/0, so zero has to keep matching. */
+  /** `gh-conductor serve --from` prints /local/graph/0, so zero has to keep matching. */
   test("accepts 0", () => {
     expect(parseEpicParams({ owner: "local", repo: "graph", number: "0" })).toEqual({ owner: "local", repo: "graph", number: 0 });
   });

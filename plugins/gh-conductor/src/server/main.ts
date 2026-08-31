@@ -1,4 +1,4 @@
-// The local graph server. `conductor view` runs it detached; `conductor serve` runs it in the foreground.
+// The local graph server. `gh-conductor view` runs it detached; `gh-conductor serve` runs it in the foreground.
 // Read-only: it fetches from GitHub on request and hands the graph to the browser; it never writes anywhere.
 
 import { parseArgs } from "node:util";
@@ -85,5 +85,5 @@ if (import.meta.main) {
     idle: values.idle,
     development: !values.idle,
   });
-  console.error(`conductor server: http://localhost:${server.port} (pid ${process.pid})`);
+  console.error(`gh-conductor server: http://localhost:${server.port} (pid ${process.pid})`);
 }

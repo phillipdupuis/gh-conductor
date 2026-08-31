@@ -1,4 +1,4 @@
-// Graph → Graphviz DOT. Pure; no I/O. `conductor graph --dot` prints this for humans and external
+// Graph → Graphviz DOT. Pure; no I/O. `gh-conductor graph --dot` prints this for humans and external
 // tools; the app lays itself out (src/core/layout.ts) and does not use it.
 //
 // Shape: the epic sits near the top, the sink of its own tree — the last of that work to complete.

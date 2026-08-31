@@ -1,4 +1,4 @@
-// Lifecycle of the background server that `conductor view` uses. One server per machine, on a fixed
+// Lifecycle of the background server that `gh-conductor view` uses. One server per machine, on a fixed
 // port when it's free; state in $TMPDIR so a second `view` reuses it. Restarted when the plugin's
 // source is newer than the running process, and it exits by itself after ten idle minutes.
 

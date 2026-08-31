@@ -1,4 +1,4 @@
-// conductor — read-only view of a gh-conductor epic. Never writes to GitHub.
+// gh-conductor — read-only view of an epic. Never writes to GitHub.
 
 import { parseArgs } from "node:util";
 import { parseEpicRef } from "../core/args.ts";
@@ -11,13 +11,13 @@ import { ensureServer, stopServer } from "./daemon.ts";
 import { openPath } from "./open.ts";
 import { renderGraph, renderReady, renderStatus } from "./render.ts";
 
-const USAGE = `usage: conductor <command> <epic> [--repo owner/name] [--json]
-       conductor <command> --from <graph.json>
-       conductor serve [--port N] [--from <graph.json>] [--stop]
+const USAGE = `usage: gh-conductor <command> <epic> [--repo owner/name] [--json]
+       gh-conductor <command> --from <graph.json>
+       gh-conductor serve [--port N] [--from <graph.json>] [--stop]
 
 <epic> is an issue number, #N, owner/repo#N, or a GitHub issue URL. The URL and
 owner/repo#N forms set the repo; otherwise --repo, $GH_REPO, or the current directory.
---from reads a graph saved by \`conductor graph <epic> --json\` (or a fixture) instead of GitHub.
+--from reads a graph saved by \`gh-conductor graph <epic> --json\` (or a fixture) instead of GitHub.
 
 commands:
   graph   <epic>   every sub-issue, plus the issues one blocked-by hop away, with state, assignees,
@@ -73,7 +73,7 @@ export async function main(argv: string[]): Promise<number> {
     }
     const port = values.port ? Number(values.port) : DEFAULT_PORT;
     const server = await serve({ port, from: values.from, idle: false });
-    console.log(`conductor serve: http://localhost:${server.port}/${values.from ? "local/graph/0" : "<owner>/<repo>/<number>"}`);
+    console.log(`gh-conductor serve: http://localhost:${server.port}/${values.from ? "local/graph/0" : "<owner>/<repo>/<number>"}`);
     await new Promise(() => {}); // until Ctrl-C
     return 0;
   }
