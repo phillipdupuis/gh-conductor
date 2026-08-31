@@ -2,6 +2,8 @@
 
 import { parseArgs } from "node:util";
 import { parseEpicRef } from "../core/args.ts";
+import { PRECEDENCE_NOTE, type SettingKey, effectiveConfig, settingKeys } from "../core/config.ts";
+import { findConfigPath, loadConfigFile, setSetting } from "./config.ts";
 import { categorize, readyNodes } from "../core/graph.ts";
 import { Graph, type Issue } from "../core/schema.ts";
 import { loadGraph, resolveRepo, type Repo } from "../github/github.ts";
@@ -14,6 +16,7 @@ import { renderGraph, renderReady, renderStatus } from "./render.ts";
 const USAGE = `usage: gh-conductor <command> <epic> [--repo owner/name] [--json]
        gh-conductor <command> --from <graph.json>
        gh-conductor serve [--port N] [--from <graph.json>] [--stop]
+       gh-conductor config [set <key> <value> [--confirmed]]
 
 <epic> is an issue number, #N, owner/repo#N, or a GitHub issue URL. The URL and
 owner/repo#N forms set the repo; otherwise --repo, $GH_REPO, or the current directory.
@@ -28,8 +31,13 @@ commands:
                    --no-open just prints.
   serve            run the graph server in the foreground (dev). --from serves a saved graph for any epic.
                    --stop stops the background server started by \`view\`.
+  config           effective preferences and where each came from (--json for machines)
+  config set <key> <value>
+                   record a preference in the workspace .gh-conductor.toml. --confirmed marks it as
+                   agent-inferred and user-confirmed rather than stated outright by the user.
 
-Read-only. Requires gh (>= 2.94) authenticated for the repo.`;
+Never writes to GitHub (\`config set\` writes only the local .gh-conductor.toml).
+Requires gh (>= 2.94) authenticated for the repo.`;
 
 async function resolveEpic(epicArg: string | undefined, repoFlag: string | undefined): Promise<{ repo: Repo; number: number } | null> {
   const ref = parseEpicRef(epicArg);
@@ -57,6 +65,7 @@ export async function main(argv: string[]): Promise<number> {
       stop: { type: "boolean", default: false },
       "no-open": { type: "boolean", default: false },
       "include-assigned": { type: "boolean", default: false },
+      confirmed: { type: "boolean", default: false },
       help: { type: "boolean", short: "h", default: false },
     },
   });
@@ -85,6 +94,39 @@ export async function main(argv: string[]): Promise<number> {
     const url = `http://localhost:${port}/${epic.repo.owner}/${epic.repo.name}/${epic.number}`;
     console.log(url);
     if (!values["no-open"]) await openPath(url);
+    return 0;
+  }
+
+  if (cmd === "config") {
+    const [, sub, key, value] = positionals;
+    if (sub === "set") {
+      if (!key || value === undefined || !settingKeys.includes(key as SettingKey)) {
+        console.error(`error: expected \`config set <key> <value>\` with key one of: ${settingKeys.join(", ")}\n\n${USAGE}`);
+        return 2;
+      }
+      const result = await setSetting(key as SettingKey, value, values.confirmed ? "confirmed" : "stated");
+      if ("error" in result) {
+        console.error(`error: ${result.error}`);
+        return 2;
+      }
+      console.log(`${key} = ${JSON.stringify(result.value)} (${result.path})`);
+      return 0;
+    }
+    if (sub !== undefined) {
+      console.error(`error: unknown config subcommand "${sub}"\n\n${USAGE}`);
+      return 2;
+    }
+    const path = await findConfigPath();
+    const settings = effectiveConfig(path ? await loadConfigFile(path) : null);
+    if (values.json) {
+      console.log(JSON.stringify({ path, settings, note: PRECEDENCE_NOTE }, null, 2));
+    } else {
+      console.log(path ?? "no .gh-conductor.toml found — defaults in effect");
+      for (const s of settings) {
+        const origin = s.source === "default" ? "default" : `workspace, ${s.provenance}`;
+        console.log(`  ${s.key} = ${JSON.stringify(s.value)}  (${origin})  ${s.description}`);
+      }
+    }
     return 0;
   }
 

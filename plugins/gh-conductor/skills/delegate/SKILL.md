@@ -11,7 +11,7 @@ description: Decide who should work an issue — this agent or a specific human 
 
 ## Steps (skeleton)
 
-1. **Read the user's delegation preferences** — their instructions (CLAUDE.md) today; a plugin settings store later.
+1. **Read the user's delegation preferences** — their instructions (CLAUDE.md), plus configured workspace preferences via `gh-conductor config --json` (proximate wins: instructions beat config).
 2. **Questions go to whoever's call it is** — default: the person who requested the work; override when the answer belongs to someone else (compliance, management).
 3. **Respect occupancy signals** — another assignee or a linked branch means taken: ask before touching. Assignee is guidance, never a hard block on the ready computation.
 4. **(future) Dispatch** — hand ready-frontier issues to parallel agents.
