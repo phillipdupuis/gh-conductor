@@ -30,8 +30,8 @@ Without that flag the server still starts, and Claude Code silently drops its no
 
 Nothing is watched until you say so. The server exposes one tool:
 
-| Tool | Argument | Effect |
-| --- | --- | --- |
+| Tool        | Argument                              | Effect                                                            |
+| ----------- | ------------------------------------- | ----------------------------------------------------------------- |
 | `subscribe` | `issues`: list of `owner/repo#number` | Replaces the watched set; an empty list stops watching everything |
 
 The list is all-or-nothing: if any reference is malformed the call is rejected and the watched set is unchanged. Trees that stay keep their history, so nothing re-fires; a newly added tree establishes its baseline on its next poll and emits only what changes afterwards.
@@ -40,11 +40,11 @@ Until `subscribe` is called (or `GH_CONDUCTOR_CHANNEL_ISSUE` seeds a tree at sta
 
 ## Configuration
 
-| Env var | Default | Meaning |
-| --- | --- | --- |
-| `GH_CONDUCTOR_CHANNEL_ISSUE` | none | Optional initial subscription, as `owner/repo#number`. A malformed value exits with an error |
-| `GH_CONDUCTOR_CHANNEL_INTERVAL` | `30` | Seconds between polls; values below `5` are raised to `5` |
-| `GH_CONDUCTOR_CHANNEL_ALLOW` | the `gh`-authenticated user | Comma-separated GitHub logins whose comments become events |
+| Env var                         | Default                     | Meaning                                                                                      |
+| ------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------- |
+| `GH_CONDUCTOR_CHANNEL_ISSUE`    | none                        | Optional initial subscription, as `owner/repo#number`. A malformed value exits with an error |
+| `GH_CONDUCTOR_CHANNEL_INTERVAL` | `30`                        | Seconds between polls; values below `5` are raised to `5`                                    |
+| `GH_CONDUCTOR_CHANNEL_ALLOW`    | the `gh`-authenticated user | Comma-separated GitHub logins whose comments become events                                   |
 
 Comments from anyone outside the allowlist are ignored. When `GH_CONDUCTOR_CHANNEL_ALLOW` is unset the login comes from `gh api user`; if that call fails the server retries on each poll and drops comments meanwhile, while sub-issue state changes keep flowing.
 

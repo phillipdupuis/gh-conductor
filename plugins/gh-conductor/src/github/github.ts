@@ -1,7 +1,15 @@
 // All GitHub I/O. Shells out to `gh` so auth, hosts, and rate limits are gh's problem.
 
 import { keyOf, summarizePrs } from "../core/graph.ts";
-import { GraphQlResponse, type Blocker, type Graph, type Issue, type RawDep, type RawIssue, type RawRef } from "../core/schema.ts";
+import {
+  GraphQlResponse,
+  type Blocker,
+  type Graph,
+  type Issue,
+  type RawDep,
+  type RawIssue,
+  type RawRef,
+} from "../core/schema.ts";
 
 export type Repo = { owner: string; name: string };
 
@@ -17,7 +25,10 @@ async function gh(args: string[]): Promise<string> {
 }
 
 export async function resolveRepo(flag?: string): Promise<Repo> {
-  const spec = flag ?? process.env.GH_REPO ?? (await gh(["repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"])).trim();
+  const spec =
+    flag ??
+    process.env.GH_REPO ??
+    (await gh(["repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"])).trim();
   const [owner, name] = spec.split("/");
   if (!owner || !name) throw new Error(`cannot parse repo "${spec}" — expected owner/name`);
   return { owner, name };
@@ -53,13 +64,21 @@ fragment X on Issue {
   blockedBy(first: 10) { nodes { number title url state repository { nameWithOwner } } }
 }`;
 
-async function fetchIssue(repo: Repo, number: number): Promise<{ issue: RawIssue; viewer: string | null }> {
+async function fetchIssue(
+  repo: Repo,
+  number: number,
+): Promise<{ issue: RawIssue; viewer: string | null }> {
   const out = await gh([
-    "api", "graphql",
-    "-f", `query=${QUERY}`,
-    "-f", `owner=${repo.owner}`,
-    "-f", `name=${repo.name}`,
-    "-F", `number=${number}`,
+    "api",
+    "graphql",
+    "-f",
+    `query=${QUERY}`,
+    "-f",
+    `owner=${repo.owner}`,
+    "-f",
+    `name=${repo.name}`,
+    "-F",
+    `number=${number}`,
   ]);
   const { data } = GraphQlResponse.parse(JSON.parse(out));
   const issue = data.repository?.issue;
@@ -69,7 +88,13 @@ async function fetchIssue(repo: Repo, number: number): Promise<{ issue: RawIssue
 
 const lc = (s: "OPEN" | "CLOSED"): "open" | "closed" => (s === "OPEN" ? "open" : "closed");
 
-const toBlocker = (b: RawRef): Blocker => ({ repo: b.repository.nameWithOwner, number: b.number, title: b.title, url: b.url, state: lc(b.state) });
+const toBlocker = (b: RawRef): Blocker => ({
+  repo: b.repository.nameWithOwner,
+  number: b.number,
+  title: b.title,
+  url: b.url,
+  state: lc(b.state),
+});
 
 /** A dependency-reached issue, as a node in its own right: no parent, and only its fetched blockers. */
 function toRelated(d: RawDep): Issue {
@@ -120,7 +145,11 @@ export async function loadGraph(repo: Repo, rootNumber: number): Promise<Graph> 
     const node = toIssue(raw, parent, depth);
     if (depth > 0) nodes.push(node);
     deps.push(...raw.blockedBy.nodes, ...raw.blocking.nodes);
-    const children = raw.subIssues?.nodes ?? (raw.subIssuesSummary.total > 0 ? (await fetchIssue(repo, raw.number)).issue.subIssues!.nodes : []);
+    const children =
+      raw.subIssues?.nodes ??
+      (raw.subIssuesSummary.total > 0
+        ? (await fetchIssue(repo, raw.number)).issue.subIssues!.nodes
+        : []);
     for (const child of children) await visit(child, keyOf(node), depth + 1);
     return node;
   };

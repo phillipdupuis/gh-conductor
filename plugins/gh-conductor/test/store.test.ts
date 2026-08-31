@@ -10,7 +10,8 @@ const view = ViewModel.parse({ graph: mid, generatedAt: "2026-08-30T12:00:00.000
 const older = ViewModel.parse({ graph: early, generatedAt: "2026-08-29T12:00:00.000Z" });
 
 const store = () => useAppStore.getState();
-const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 
 beforeEach(() => useAppStore.setState(initialState));
 

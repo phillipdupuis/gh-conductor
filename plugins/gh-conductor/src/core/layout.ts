@@ -52,7 +52,13 @@ export type EdgeKind = "blocking" | "tree";
  * Keys always contain a "#", so the two id spaces cannot collide. Several issue-level edges can
  * collapse into one; `pairs` keeps them for the trace.
  */
-export type LayoutEdge = { id: string; source: string; target: string; kind: EdgeKind; pairs: [string, string][] };
+export type LayoutEdge = {
+  id: string;
+  source: string;
+  target: string;
+  kind: EdgeKind;
+  pairs: [string, string][];
+};
 
 export type Layout = { issues: IssuePlacement[]; layers: LayerPlacement[]; edges: LayoutEdge[] };
 
@@ -64,7 +70,12 @@ export const layerId = (layer: number) => `layer-${layer}`;
  * frame and toggle. In layout px, so the viewport can be sized and anchored without measuring the
  * DOM. A layout that places nothing has zero bounds.
  */
-export function boundsOf(layout: Layout): { minX: number; minY: number; maxX: number; maxY: number } {
+export function boundsOf(layout: Layout): {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+} {
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
@@ -82,13 +93,18 @@ export function boundsOf(layout: Layout): { minX: number; minY: number; maxX: nu
 
 export const isCollapsible = (layer: string[]) => layer.length > COLLAPSE_THRESHOLD;
 
-export function layerMode(layer: string[], index: number, expanded: ReadonlySet<number>): LayerMode {
+export function layerMode(
+  layer: string[],
+  index: number,
+  expanded: ReadonlySet<number>,
+): LayerMode {
   if (!isCollapsible(layer)) return "single";
   return expanded.has(index) ? "expanded" : "collapsed";
 }
 
 export function rowHeight(layer: string[], mode: LayerMode): number {
-  if (mode === "collapsed") return Math.min(layer.length, MAX_VISIBLE_ROWS) * ROW_HEIGHT + FOOTER_HEIGHT;
+  if (mode === "collapsed")
+    return Math.min(layer.length, MAX_VISIBLE_ROWS) * ROW_HEIGHT + FOOTER_HEIGHT;
   return mode === "expanded" ? NODE_HEIGHT + 2 * FRAME_PAD : NODE_HEIGHT;
 }
 
@@ -114,12 +130,24 @@ export function layoutGraph(g: Graph, layers: string[][], expanded: ReadonlySet<
       const x0 = -span / 2;
       const pad = mode === "expanded" ? FRAME_PAD : 0;
       layer.forEach((n, j) => {
-        issues.push({ key: n, layer: i, x: x0 + j * (NODE_WIDTH + GAP_X), y: y + pad, width: NODE_WIDTH, height: NODE_HEIGHT });
+        issues.push({
+          key: n,
+          layer: i,
+          x: x0 + j * (NODE_WIDTH + GAP_X),
+          y: y + pad,
+          width: NODE_WIDTH,
+          height: NODE_HEIGHT,
+        });
         rep.set(n, n);
       });
       if (mode === "expanded") {
         frame = { x: x0 - pad, y, width: span + 2 * pad, height };
-        toggle = { x: -TOGGLE_WIDTH / 2, y: y - TOGGLE_HEIGHT + TOGGLE_OVERLAP, width: TOGGLE_WIDTH, height: TOGGLE_HEIGHT };
+        toggle = {
+          x: -TOGGLE_WIDTH / 2,
+          y: y - TOGGLE_HEIGHT + TOGGLE_OVERLAP,
+          width: TOGGLE_WIDTH,
+          height: TOGGLE_HEIGHT,
+        };
       }
     }
     placements.push({ layer: i, issues: layer, mode, y, height, node, frame, toggle });
@@ -141,7 +169,8 @@ export function layoutGraph(g: Graph, layers: string[][], expanded: ReadonlySet<
     } else edges.set(id, { id, source, target, kind, pairs: [[from, to]] });
   };
   for (const n of g.nodes) add(keyOf(n), n.parent ?? keyOf(g.root), "tree");
-  for (const n of [g.root, ...g.nodes, ...g.related]) for (const b of n.blockedBy) add(keyOf(b), keyOf(n), "blocking");
+  for (const n of [g.root, ...g.nodes, ...g.related])
+    for (const b of n.blockedBy) add(keyOf(b), keyOf(n), "blocking");
 
   return { issues, layers: placements, edges: [...edges.values()] };
 }

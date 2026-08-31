@@ -1,4 +1,14 @@
-import { Background, Controls, MarkerType, MiniMap, Position, ReactFlow, type Edge, type NodeTypes, type ReactFlowInstance } from "@xyflow/react";
+import {
+  Background,
+  Controls,
+  MarkerType,
+  MiniMap,
+  Position,
+  ReactFlow,
+  type Edge,
+  type NodeTypes,
+  type ReactFlowInstance,
+} from "@xyflow/react";
 import { useMemo, useRef } from "react";
 import { keyOf } from "../../core/graph.ts";
 import { boundsOf, layerId, type Box, type Layout } from "../../core/layout.ts";
@@ -9,7 +19,12 @@ import { LayerFrame, type LayerFrameFlowNode } from "./LayerFrame.tsx";
 import { LayerNode, type LayerFlowNode } from "./LayerNode.tsx";
 import { LayerToggle, type LayerToggleFlowNode } from "./LayerToggle.tsx";
 
-const nodeTypes: NodeTypes = { issue: IssueNode, layer: LayerNode, layerFrame: LayerFrame, layerToggle: LayerToggle };
+const nodeTypes: NodeTypes = {
+  issue: IssueNode,
+  layer: LayerNode,
+  layerFrame: LayerFrame,
+  layerToggle: LayerToggle,
+};
 
 /** Margin around the graph in the initial viewport, px. */
 const PAD = 24;
@@ -63,8 +78,22 @@ function placed(b: Box, withHandles: boolean) {
     measured: { width: b.width, height: b.height },
     handles: withHandles
       ? [
-          { type: "source" as const, position: Position.Top, x: b.width / 2, y: 0, width: 1, height: 1 },
-          { type: "target" as const, position: Position.Bottom, x: b.width / 2, y: b.height, width: 1, height: 1 },
+          {
+            type: "source" as const,
+            position: Position.Top,
+            x: b.width / 2,
+            y: 0,
+            width: 1,
+            height: 1,
+          },
+          {
+            type: "target" as const,
+            position: Position.Bottom,
+            x: b.width / 2,
+            y: b.height,
+            width: 1,
+            height: 1,
+          },
         ]
       : [],
     draggable: false,
@@ -72,23 +101,53 @@ function placed(b: Box, withHandles: boolean) {
   };
 }
 
-export function GraphCanvas({ graph, layout, categories, traced, onHover, onSelect, onExpand, onCollapse }: Props) {
+export function GraphCanvas({
+  graph,
+  layout,
+  categories,
+  traced,
+  onHover,
+  onSelect,
+  onExpand,
+  onCollapse,
+}: Props) {
   const wrap = useRef<HTMLDivElement>(null);
-  const issues = useMemo(() => new Map<string, Issue>([graph.root, ...graph.nodes, ...graph.related].map((n) => [keyOf(n), n])), [graph]);
+  const issues = useMemo(
+    () =>
+      new Map<string, Issue>(
+        [graph.root, ...graph.nodes, ...graph.related].map((n) => [keyOf(n), n]),
+      ),
+    [graph],
+  );
 
   const nodes = useMemo<FlowNode[]>(() => {
     const out: FlowNode[] = [];
     // Frames first: nodes paint in array order, so columns and toggles draw over them.
-    for (const l of layout.layers) if (l.frame) out.push({ id: `frame-${l.layer}`, type: "layerFrame", ...placed(l.frame, false), selectable: false, data: { layer: l.layer } });
+    for (const l of layout.layers)
+      if (l.frame)
+        out.push({
+          id: `frame-${l.layer}`,
+          type: "layerFrame",
+          ...placed(l.frame, false),
+          selectable: false,
+          data: { layer: l.layer },
+        });
     for (const p of layout.issues) {
       const issue = issues.get(p.key);
       if (!issue) continue;
-      const category: Category | "root" = p.key === keyOf(graph.root) ? "root" : (categories.get(p.key) ?? "blocked");
+      const category: Category | "root" =
+        p.key === keyOf(graph.root) ? "root" : (categories.get(p.key) ?? "blocked");
       out.push({
         id: p.key,
         type: "issue",
         ...placed(p, true),
-        data: { issue, category, rootRepo: graph.repo, dim: traced !== null && !traced.lit.has(p.key), focus: traced?.focus === p.key },
+        data: {
+          issue,
+          category,
+          rootRepo: graph.repo,
+          dim: traced !== null && !traced.lit.has(p.key),
+          focus: traced?.focus === p.key,
+        },
       });
     }
     for (const l of layout.layers) {
@@ -97,16 +156,32 @@ export function GraphCanvas({ graph, layout, categories, traced, onHover, onSele
           id: layerId(l.layer),
           type: "layer",
           ...placed(l.node, true),
-          data: { layer: l.layer, issues: l.issues.flatMap((n) => issues.get(n) ?? []), rootRepo: graph.repo, categories, traced, onHover, onSelect, onExpand },
+          data: {
+            layer: l.layer,
+            issues: l.issues.flatMap((n) => issues.get(n) ?? []),
+            rootRepo: graph.repo,
+            categories,
+            traced,
+            onHover,
+            onSelect,
+            onExpand,
+          },
         });
       }
-      if (l.toggle) out.push({ id: `toggle-${l.layer}`, type: "layerToggle", ...placed(l.toggle, false), data: { layer: l.layer, onToggle: onCollapse } });
+      if (l.toggle)
+        out.push({
+          id: `toggle-${l.layer}`,
+          type: "layerToggle",
+          ...placed(l.toggle, false),
+          data: { layer: l.layer, onToggle: onCollapse },
+        });
     }
     return out;
   }, [graph, layout, issues, categories, traced, onHover, onSelect, onExpand, onCollapse]);
 
   const edges = useMemo<Edge[]>(() => {
-    const lit = (a: string, b: string) => traced === null || (traced.lit.has(a) && traced.lit.has(b));
+    const lit = (a: string, b: string) =>
+      traced === null || (traced.lit.has(a) && traced.lit.has(b));
     const closed = (n: string) => issues.get(n)?.state === "closed";
     return layout.edges.map((e) => {
       // An aggregated edge is lit if any of the issue-level edges behind it is; done if all are.
@@ -114,13 +189,31 @@ export function GraphCanvas({ graph, layout, categories, traced, onHover, onSele
       const done = e.pairs.every(([a, b]) => closed(a) || closed(b));
       // Containment: sub-issue → parent, muted. Blocking: blocker → blocked, with an arrow.
       return e.kind === "tree"
-        ? { id: e.id, source: e.source, target: e.target, style: { stroke: "var(--tree)", strokeWidth: 1.5, opacity: on ? (done ? 0.5 : 1) : 0.15 } }
+        ? {
+            id: e.id,
+            source: e.source,
+            target: e.target,
+            style: {
+              stroke: "var(--tree)",
+              strokeWidth: 1.5,
+              opacity: on ? (done ? 0.5 : 1) : 0.15,
+            },
+          }
         : {
             id: e.id,
             source: e.source,
             target: e.target,
-            markerEnd: { type: MarkerType.ArrowClosed, color: "var(--edge)", width: 16, height: 16 },
-            style: { stroke: "var(--edge)", strokeWidth: 2, opacity: on ? (done ? 0.45 : 1) : 0.15 },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: "var(--edge)",
+              width: 16,
+              height: 16,
+            },
+            style: {
+              stroke: "var(--edge)",
+              strokeWidth: 2,
+              opacity: on ? (done ? 0.45 : 1) : 0.15,
+            },
           };
     });
   }, [layout, issues, traced]);
@@ -133,7 +226,9 @@ export function GraphCanvas({ graph, layout, categories, traced, onHover, onSele
         nodeTypes={nodeTypes}
         colorMode="dark"
         // Fires once per mount, so Refresh and expand/collapse leave the viewport where the user put it.
-        onInit={(instance: ReactFlowInstance<FlowNode, Edge>) => instance.setViewport(initialViewport(wrap.current?.clientWidth ?? 0, layout))}
+        onInit={(instance: ReactFlowInstance<FlowNode, Edge>) =>
+          instance.setViewport(initialViewport(wrap.current?.clientWidth ?? 0, layout))
+        }
         // Figma's input model: scroll pans (a trackpad's two fingers), pinch and Meta/Ctrl+scroll zoom.
         panOnScroll
         zoomOnScroll={false}
@@ -149,7 +244,18 @@ export function GraphCanvas({ graph, layout, categories, traced, onHover, onSele
       >
         <Background gap={24} size={1} />
         <Controls showInteractive={false} />
-        <MiniMap pannable zoomable nodeColor={(n) => (n.type === "issue" ? STATUS_COLOR[(n as IssueFlowNode).data.category] : n.type === "layer" ? "#21262d" : "transparent")} nodeStrokeWidth={0} />
+        <MiniMap
+          pannable
+          zoomable
+          nodeColor={(n) =>
+            n.type === "issue"
+              ? STATUS_COLOR[(n as IssueFlowNode).data.category]
+              : n.type === "layer"
+                ? "#21262d"
+                : "transparent"
+          }
+          nodeStrokeWidth={0}
+        />
       </ReactFlow>
     </div>
   );

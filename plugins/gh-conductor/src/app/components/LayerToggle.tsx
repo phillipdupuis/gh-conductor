@@ -8,7 +8,12 @@ export type LayerToggleFlowNode = Node<LayerToggleData, "layerToggle">;
 /** The tab on the top edge of an expanded row's frame. */
 export function LayerToggle({ data }: NodeProps<LayerToggleFlowNode>) {
   return (
-    <Button variant="outline" size="xs" className="nodrag h-full w-full rounded-full bg-card" onClick={() => data.onToggle(data.layer)}>
+    <Button
+      variant="outline"
+      size="xs"
+      className="nodrag h-full w-full rounded-full bg-card"
+      onClick={() => data.onToggle(data.layer)}
+    >
       <FoldHorizontal /> Collapse
     </Button>
   );

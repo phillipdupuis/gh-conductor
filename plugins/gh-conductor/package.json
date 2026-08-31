@@ -2,16 +2,18 @@
   "name": "gh-conductor",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "description": "Read-only graph/ready/status commands plus a locally served graph view for gh-conductor. Requires bun and gh >= 2.94.",
   "bin": {
     "gh-conductor": "./src/cli/main.ts"
   },
+  "type": "module",
   "scripts": {
     "test": "bun test",
-    "check": "bun x tsc --noEmit -p tsconfig.json && bun x tsc --noEmit -p src/app/tsconfig.json",
+    "check": "bun x tsc --noEmit -p tsconfig.json && bun x tsc --noEmit -p src/app/tsconfig.json && bun x oxlint && bun x oxfmt --check",
     "fixtures": "bun scripts/build-fixtures.ts",
-    "serve": "bun --hot src/server/main.ts"
+    "serve": "bun --hot src/server/main.ts",
+    "lint": "bun x oxlint",
+    "fmt": "bun x oxfmt"
   },
   "dependencies": {
     "@primer/octicons-react": "^19.33.0",
@@ -34,6 +36,8 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
     "bun-types": "^1.4.0",
+    "oxfmt": "^0.65.0",
+    "oxlint": "^1.80.0",
     "typescript": "^7.0.2"
   }
 }

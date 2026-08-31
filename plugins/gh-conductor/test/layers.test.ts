@@ -30,9 +30,12 @@ describe("layersOf (upgrade-python-mid)", () => {
     expect(layers[layers.length - 2]).toEqual([k(120)]);
   });
   test("every issue is in exactly one layer, in graph order", () => {
-    expect(layers.flat().sort()).toEqual([k(120), ...g.nodes.map(keyOf), ...g.related.map(keyOf)].sort());
+    expect(layers.flat().sort()).toEqual(
+      [k(120), ...g.nodes.map(keyOf), ...g.related.map(keyOf)].sort(),
+    );
     const order = new Map([g.root, ...g.nodes, ...g.related].map((n, i) => [keyOf(n), i]));
-    for (const layer of layers) expect([...layer].sort((a, b) => order.get(a)! - order.get(b)!)).toEqual(layer);
+    for (const layer of layers)
+      expect([...layer].sort((a, b) => order.get(a)! - order.get(b)!)).toEqual(layer);
   });
   test("a blocker with slack floats up to just below its only dependent", () => {
     // #129 is blocked by devops#57 as well as by #125; nothing blocks #57 itself, so it could start
@@ -54,7 +57,13 @@ describe("as late as possible", () => {
       title: `#${number}`,
       parent: "o/r#1",
       depth: 1,
-      blockedBy: blockedBy.map((n) => ({ repo: "o/r", number: n, title: `#${n}`, url: "", state: "open" as const })),
+      blockedBy: blockedBy.map((n) => ({
+        repo: "o/r",
+        number: n,
+        title: `#${n}`,
+        url: "",
+        state: "open" as const,
+      })),
       pr: null,
       assignees: [],
     });
@@ -80,7 +89,13 @@ describe("cycles", () => {
   });
   test("a sub-issue blocked by its own parent is a cycle", () => {
     const parent: Issue = { ...g.nodes[0]!, number: 200, parent: null, title: "p", blockedBy: [] };
-    const child: Issue = { ...g.nodes[0]!, number: 201, parent: k(200), title: "c", blockedBy: [{ repo: parent.repo, number: 200, title: "p", url: "", state: "open" }] };
+    const child: Issue = {
+      ...g.nodes[0]!,
+      number: 201,
+      parent: k(200),
+      title: "c",
+      blockedBy: [{ repo: parent.repo, number: 200, title: "p", url: "", state: "open" }],
+    };
     expect(() => layersOf({ ...g, nodes: [parent, child] })).toThrow(/Cycle/);
   });
 });

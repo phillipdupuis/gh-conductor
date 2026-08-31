@@ -1,6 +1,14 @@
 // Human-readable output. --json bypasses all of this.
 
-import { blockedByText, categorize, groupByCategory, refLabel, type Category, type Graph, type Issue } from "../core/graph.ts";
+import {
+  blockedByText,
+  categorize,
+  groupByCategory,
+  refLabel,
+  type Category,
+  type Graph,
+  type Issue,
+} from "../core/graph.ts";
 
 function annotations(n: Issue, g: Graph): string[] {
   const a: string[] = [];
@@ -23,7 +31,8 @@ function header(g: Graph): string {
 export function renderGraph(g: Graph): string {
   const out = [header(g)];
   // The tree first, indented by depth; then the issues one blocked-by hop off it, unindented.
-  for (const n of [...g.nodes, ...g.related]) out.push(`${"  ".repeat(n.depth)}[${categorize(n, g)}] ${line(n, g, "")}`);
+  for (const n of [...g.nodes, ...g.related])
+    out.push(`${"  ".repeat(n.depth)}[${categorize(n, g)}] ${line(n, g, "")}`);
   return out.join("\n");
 }
 
@@ -37,13 +46,28 @@ export function renderReady(nodes: Issue[], g: Graph): string {
  * awaiting review and an issue simply assigned to someone — so it is split by `match`, exactly as
  * src/app/components/Sidebar.tsx does.
  */
-type Section = { key: string; label: string; category: Category; match?: (issue: Issue) => boolean };
+type Section = {
+  key: string;
+  label: string;
+  category: Category;
+  match?: (issue: Issue) => boolean;
+};
 
 const SECTIONS: Section[] = [
   { key: "ready", label: "READY", category: "ready" },
   { key: "in_progress", label: "IN PROGRESS", category: "in_progress" },
-  { key: "in_review", label: "IN REVIEW", category: "waiting", match: (n) => n.pr?.state === "review" },
-  { key: "assigned", label: "ASSIGNED", category: "waiting", match: (n) => n.pr?.state !== "review" },
+  {
+    key: "in_review",
+    label: "IN REVIEW",
+    category: "waiting",
+    match: (n) => n.pr?.state === "review",
+  },
+  {
+    key: "assigned",
+    label: "ASSIGNED",
+    category: "waiting",
+    match: (n) => n.pr?.state !== "review",
+  },
   { key: "blocked", label: "BLOCKED", category: "blocked" },
   { key: "done", label: "DONE", category: "done" },
 ];

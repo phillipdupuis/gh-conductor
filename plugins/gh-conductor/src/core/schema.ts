@@ -71,7 +71,12 @@ export type Category = z.infer<typeof Category>;
 
 const GhState = z.enum(["OPEN", "CLOSED"]);
 
-export const RawPr = z.object({ number: z.number().int(), url: z.string(), isDraft: z.boolean(), state: z.enum(["OPEN", "CLOSED", "MERGED"]) });
+export const RawPr = z.object({
+  number: z.number().int(),
+  url: z.string(),
+  isDraft: z.boolean(),
+  state: z.enum(["OPEN", "CLOSED", "MERGED"]),
+});
 export type RawPr = z.infer<typeof RawPr>;
 
 const RawRepository = z.object({ nameWithOwner: z.string() });
@@ -130,5 +135,10 @@ export const ViewModel = z.object({ graph: Graph, generatedAt: z.string() });
 export type ViewModel = z.infer<typeof ViewModel>;
 
 /** GET /api/health */
-export const Health = z.object({ pid: z.number().int(), port: z.number().int(), startedAt: z.string(), root: z.string() });
+export const Health = z.object({
+  pid: z.number().int(),
+  port: z.number().int(),
+  startedAt: z.string(),
+  root: z.string(),
+});
 export type Health = z.infer<typeof Health>;

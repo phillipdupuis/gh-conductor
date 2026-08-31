@@ -112,7 +112,9 @@ describe("reconcile", () => {
 
 describe("describeWatching", () => {
   test("lists the watched trees", () => {
-    expect(describeWatching(["acme/widgets#1", "acme/widgets#9"])).toBe("Watching acme/widgets#1, acme/widgets#9");
+    expect(describeWatching(["acme/widgets#1", "acme/widgets#9"])).toBe(
+      "Watching acme/widgets#1, acme/widgets#9",
+    );
   });
 
   test("says so when nothing is watched", () => {

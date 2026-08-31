@@ -63,7 +63,11 @@ export function LayerNode({ data }: NodeProps<LayerFlowNode>) {
           );
         })}
       </ul>
-      <div className="flex shrink-0 items-center justify-between border-t px-3 text-muted-foreground" style={{ height: FOOTER_HEIGHT }} onMouseEnter={() => onHover(null)}>
+      <div
+        className="flex shrink-0 items-center justify-between border-t px-3 text-muted-foreground"
+        style={{ height: FOOTER_HEIGHT }}
+        onMouseEnter={() => onHover(null)}
+      >
         <span>{hidden > 0 ? `+${hidden} more` : ""}</span>
         <Button variant="ghost" size="xs" className="nodrag" onClick={() => onExpand(layer)}>
           <UnfoldHorizontal /> Expand

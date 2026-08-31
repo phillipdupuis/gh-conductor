@@ -11,14 +11,18 @@ export type { Blocker, Category, Graph, Issue, Pr, RawPr } from "./schema.ts";
 export const keyOf = (n: { repo: string; number: number }): string => `${n.repo}#${n.number}`;
 
 /** How GitHub writes a reference: "#7" in its own repo, "owner/repo#7" from anywhere else. */
-export const refLabel = (n: { repo: string; number: number }, rootRepo: string): string => (n.repo === rootRepo ? `#${n.number}` : `${n.repo}#${n.number}`);
+export const refLabel = (n: { repo: string; number: number }, rootRepo: string): string =>
+  n.repo === rootRepo ? `#${n.number}` : `${n.repo}#${n.number}`;
 
 /** "blocked by #3, #9 and 2 open sub-issues" — the refs are formatted by the caller. */
 export function blockedByText(n: Issue, g: Graph, ref: (b: Blocker) => string): string | null {
   const open = openBlockers(n).map(ref);
   const kids = openChildren(n, g).length;
   if (!open.length && !kids) return null;
-  const parts = [open.join(", "), kids ? `${kids} open sub-issue${kids === 1 ? "" : "s"}` : ""].filter(Boolean);
+  const parts = [
+    open.join(", "),
+    kids ? `${kids} open sub-issue${kids === 1 ? "" : "s"}` : "",
+  ].filter(Boolean);
   return `blocked by ${parts.join(" and ")}`;
 }
 
@@ -66,7 +70,13 @@ export function readyNodes(g: Graph, opts: { includeAssigned?: boolean } = {}): 
 }
 
 export function groupByCategory(g: Graph): Record<Category, Issue[]> {
-  const out: Record<Category, Issue[]> = { ready: [], in_progress: [], waiting: [], blocked: [], done: [] };
+  const out: Record<Category, Issue[]> = {
+    ready: [],
+    in_progress: [],
+    waiting: [],
+    blocked: [],
+    done: [],
+  };
   for (const n of g.nodes) out[categorize(n, g)].push(n);
   return out;
 }

@@ -30,7 +30,13 @@ describe("effectiveConfig", () => {
 
   test("file value wins and carries provenance (defaulting to stated)", () => {
     const [byline] = effectiveConfig({ byline: false });
-    expect(byline).toMatchObject({ key: "byline", value: false, default: true, source: "workspace", provenance: "stated" });
+    expect(byline).toMatchObject({
+      key: "byline",
+      value: false,
+      default: true,
+      source: "workspace",
+      provenance: "stated",
+    });
     const [confirmed] = effectiveConfig({ byline: false, provenance: { byline: "confirmed" } });
     expect(confirmed?.provenance).toBe("confirmed");
   });

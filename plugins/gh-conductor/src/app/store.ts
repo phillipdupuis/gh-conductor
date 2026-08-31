@@ -6,7 +6,11 @@ import { layersOf } from "../core/layers.ts";
 import { isCollapsible } from "../core/layout.ts";
 import type { ViewModel } from "../core/schema.ts";
 
-export type Load = { status: "idle" } | { status: "loading"; prev: ViewModel | null } | { status: "ready"; view: ViewModel } | { status: "error"; message: string; prev: ViewModel | null };
+export type Load =
+  | { status: "idle" }
+  | { status: "loading"; prev: ViewModel | null }
+  | { status: "ready"; view: ViewModel }
+  | { status: "error"; message: string; prev: ViewModel | null };
 
 type State = {
   issue: IssuePath | null;
@@ -31,11 +35,21 @@ type Actions = {
 
 export type AppState = State & Actions;
 
-export const initialState: State = { issue: null, load: { status: "idle" }, hover: null, selected: null, expanded: new Set() };
+export const initialState: State = {
+  issue: null,
+  load: { status: "idle" },
+  hover: null,
+  selected: null,
+  expanded: new Set(),
+};
 
 /** The graph on screen: the loaded one, or the one it is replacing. Never allocates — safe as a selector. */
 export function currentView(s: State): ViewModel | null {
-  return s.load.status === "ready" ? s.load.view : s.load.status === "loading" || s.load.status === "error" ? s.load.prev : null;
+  return s.load.status === "ready"
+    ? s.load.view
+    : s.load.status === "loading" || s.load.status === "error"
+      ? s.load.prev
+      : null;
 }
 
 export const useAppStore = create<AppState>()((set, get) => ({
@@ -50,7 +64,13 @@ export const useAppStore = create<AppState>()((set, get) => ({
     try {
       get().receiveView(await fetchView(issue));
     } catch (err) {
-      set((s) => ({ load: { status: "error", message: err instanceof Error ? err.message : String(err), prev: s.load.status === "loading" ? s.load.prev : null } }));
+      set((s) => ({
+        load: {
+          status: "error",
+          message: err instanceof Error ? err.message : String(err),
+          prev: s.load.status === "loading" ? s.load.prev : null,
+        },
+      }));
     }
   },
 

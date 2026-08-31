@@ -26,7 +26,9 @@ async function readState(): Promise<State | null> {
 
 async function health(port: number): Promise<Health | null> {
   try {
-    const res = await fetch(`http://localhost:${port}/api/health`, { signal: AbortSignal.timeout(1000) });
+    const res = await fetch(`http://localhost:${port}/api/health`, {
+      signal: AbortSignal.timeout(1000),
+    });
     return res.ok ? Health.parse(await res.json()) : null;
   } catch {
     return null;
@@ -54,7 +56,8 @@ export async function ensureServer(): Promise<{ port: number; started: boolean }
   const st = await readState();
   if (st) {
     const h = await health(st.port);
-    if (h && h.pid === st.pid && h.root === ROOT && Date.parse(h.startedAt) >= sourceMtime()) return { port: st.port, started: false };
+    if (h && h.pid === st.pid && h.root === ROOT && Date.parse(h.startedAt) >= sourceMtime())
+      return { port: st.port, started: false };
     if (h) kill(h.pid);
     else kill(st.pid);
   }
@@ -81,7 +84,9 @@ export async function ensureServer(): Promise<{ port: number; started: boolean }
         return { port: h.port, started: true };
       }
     }
-    const logged = existsSync(LOG) ? (await log.text()).match(/http:\/\/localhost:(\d+) \(pid (\d+)\)/g)?.at(-1) : undefined;
+    const logged = existsSync(LOG)
+      ? (await log.text()).match(/http:\/\/localhost:(\d+) \(pid (\d+)\)/g)?.at(-1)
+      : undefined;
     const m = logged?.match(/localhost:(\d+) \(pid (\d+)\)/);
     if (m && Number(m[2]) === proc.pid) {
       const port = Number(m[1]);

@@ -84,8 +84,11 @@ export function layersOf(g: Graph): string[][] {
   for (const n of g.nodes) (deps.get(n.parent ?? keyOf(g.root)) as Set<string>).add(keyOf(n));
   // A related issue nothing here is blocked by has no dependent to hold it down, so it would tie
   // with the root's layer and read as parallel work. Make it depend on the root: downstream of everything.
-  const blockerKeys = new Set(all.flatMap((n) => n.blockedBy.map(keyOf).filter((k) => order.has(k))));
-  for (const x of g.related) if (!blockerKeys.has(keyOf(x))) (deps.get(keyOf(x)) as Set<string>).add(keyOf(g.root));
+  const blockerKeys = new Set(
+    all.flatMap((n) => n.blockedBy.map(keyOf).filter((k) => order.has(k))),
+  );
+  for (const x of g.related)
+    if (!blockerKeys.has(keyOf(x))) (deps.get(keyOf(x)) as Set<string>).add(keyOf(g.root));
   const byOrder = (a: string, b: string) => order.get(a)! - order.get(b)!;
   return toLayers([...order.keys()], deps).map((layer) => [...layer].sort(byOrder));
 }

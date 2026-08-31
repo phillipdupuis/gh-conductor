@@ -19,13 +19,28 @@ type Props = {
  * a pull request awaiting review, and an issue simply assigned to someone — so it is split here
  * rather than shown under an invented label. A section list, not a core concept.
  */
-type Section = { key: string; label: string; category: Category; match?: (issue: Issue) => boolean };
+type Section = {
+  key: string;
+  label: string;
+  category: Category;
+  match?: (issue: Issue) => boolean;
+};
 
 const SECTIONS: Section[] = [
   { key: "ready", label: "Ready", category: "ready" },
   { key: "in_progress", label: "In progress", category: "in_progress" },
-  { key: "in_review", label: "In review", category: "waiting", match: (n) => n.pr?.state === "review" },
-  { key: "assigned", label: "Assigned", category: "waiting", match: (n) => n.pr?.state !== "review" },
+  {
+    key: "in_review",
+    label: "In review",
+    category: "waiting",
+    match: (n) => n.pr?.state === "review",
+  },
+  {
+    key: "assigned",
+    label: "Assigned",
+    category: "waiting",
+    match: (n) => n.pr?.state !== "review",
+  },
   { key: "blocked", label: "Blocked", category: "blocked" },
   { key: "done", label: "Done", category: "done" },
 ];
@@ -72,7 +87,14 @@ export function Sidebar({ graph, categories, traced, onHover, onSelect }: Props)
             {open && (
               <ul>
                 {items.map((n) => (
-                  <Row key={keyOf(n)} issue={n} graph={graph} traced={traced} onHover={onHover} onSelect={onSelect} />
+                  <Row
+                    key={keyOf(n)}
+                    issue={n}
+                    graph={graph}
+                    traced={traced}
+                    onHover={onHover}
+                    onSelect={onSelect}
+                  />
                 ))}
               </ul>
             )}
@@ -83,12 +105,19 @@ export function Sidebar({ graph, categories, traced, onHover, onSelect }: Props)
   );
 }
 
-function Row({ issue: n, graph, traced, onHover, onSelect }: { issue: Issue } & Omit<Props, "categories">) {
+function Row({
+  issue: n,
+  graph,
+  traced,
+  onHover,
+  onSelect,
+}: { issue: Issue } & Omit<Props, "categories">) {
   const key = keyOf(n);
   const meta: string[] = [];
   const blocked = blockedByText(n, graph, (b) => refLabel(b, graph.repo));
   if (blocked) meta.push(blocked);
-  if (n.assignees.length) meta.push(n.assignees.map((a) => (a === graph.viewer ? `@${a} (you)` : `@${a}`)).join(", "));
+  if (n.assignees.length)
+    meta.push(n.assignees.map((a) => (a === graph.viewer ? `@${a} (you)` : `@${a}`)).join(", "));
   if (n.pr) meta.push(`PR #${n.pr.number} ${n.pr.state}`);
   const dim = traced !== null && !traced.lit.has(key);
   const hot = traced?.focus === key;
@@ -100,12 +129,18 @@ function Row({ issue: n, graph, traced, onHover, onSelect }: { issue: Issue } & 
         onMouseEnter={() => onHover(key)}
         onMouseLeave={() => onHover(null)}
         onClick={() => onSelect(key)}
-        className={cn("block w-full px-3 py-1.5 text-left transition-opacity hover:bg-accent", dim && "opacity-40", hot && "bg-accent")}
+        className={cn(
+          "block w-full px-3 py-1.5 text-left transition-opacity hover:bg-accent",
+          dim && "opacity-40",
+          hot && "bg-accent",
+        )}
       >
         <span className={cn("block truncate", n.state === "closed" && "text-muted-foreground")}>
           <span className="text-muted-foreground">{refLabel(n, graph.repo)}</span> {n.title}
         </span>
-        {meta.length > 0 && <span className="block truncate text-xs text-muted-foreground">{meta.join(" · ")}</span>}
+        {meta.length > 0 && (
+          <span className="block truncate text-xs text-muted-foreground">{meta.join(" · ")}</span>
+        )}
       </button>
     </li>
   );

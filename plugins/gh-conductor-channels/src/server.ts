@@ -5,14 +5,23 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { diff, type FetchedComment, type FetchedSubIssue } from "./diff.ts";
-import { describeWatching, parseIssueRef, parseIssueRefs, reconcile, type Subscription } from "./subscriptions.ts";
+import {
+  describeWatching,
+  parseIssueRef,
+  parseIssueRefs,
+  reconcile,
+  type Subscription,
+} from "./subscriptions.ts";
 
 const DEFAULT_INTERVAL_SECONDS = 30;
 const MIN_INTERVAL_SECONDS = 5;
 
 function parseInterval(raw: string | undefined): number {
   const seconds = raw === undefined ? DEFAULT_INTERVAL_SECONDS : Number(raw);
-  return Math.max(MIN_INTERVAL_SECONDS, Number.isFinite(seconds) ? seconds : DEFAULT_INTERVAL_SECONDS);
+  return Math.max(
+    MIN_INTERVAL_SECONDS,
+    Number.isFinite(seconds) ? seconds : DEFAULT_INTERVAL_SECONDS,
+  );
 }
 
 async function gh(args: string[]): Promise<unknown> {
@@ -65,8 +74,9 @@ let allowlist: Set<string> | null =
 async function ensureAllowlist(): Promise<void> {
   if (allowlist !== null) return;
   try {
-    const login = (await gh(["api", "user"]) as { login?: unknown } | null)?.login;
-    if (typeof login !== "string" || login.length === 0) throw new Error("gh api user returned no login");
+    const login = ((await gh(["api", "user"])) as { login?: unknown } | null)?.login;
+    if (typeof login !== "string" || login.length === 0)
+      throw new Error("gh api user returned no login");
     allowlist = new Set([login]);
   } catch (err) {
     console.error(`gh-conductor-channels: cannot resolve the comment allowlist — ${reason(err)}`);
@@ -93,7 +103,8 @@ const mcp = new Server(
 
 const SUBSCRIBE_TOOL = {
   name: "subscribe",
-  description: "Replace the set of issue trees this channel watches. Pass an empty list to stop watching everything.",
+  description:
+    "Replace the set of issue trees this channel watches. Pass an empty list to stop watching everything.",
   inputSchema: {
     type: "object",
     properties: {
@@ -103,12 +114,16 @@ const SUBSCRIBE_TOOL = {
   },
 } as const;
 
-const say = (text: string, isError = false) => ({ content: [{ type: "text" as const, text }], isError });
+const say = (text: string, isError = false) => ({
+  content: [{ type: "text" as const, text }],
+  isError,
+});
 
 mcp.setRequestHandler(ListToolsRequestSchema, () => ({ tools: [SUBSCRIBE_TOOL] }));
 
 mcp.setRequestHandler(CallToolRequestSchema, (request) => {
-  if (request.params.name !== SUBSCRIBE_TOOL.name) return say(`Unknown tool "${request.params.name}".`, true);
+  if (request.params.name !== SUBSCRIBE_TOOL.name)
+    return say(`Unknown tool "${request.params.name}".`, true);
   const issues = request.params.arguments?.issues;
   if (!Array.isArray(issues) || issues.some((issue) => typeof issue !== "string")) {
     return say("subscribe expects issues to be an array of owner/repo#number strings.", true);
@@ -137,9 +152,18 @@ process.stdin.on("close", () => process.exit(0));
 async function pollRoot(sub: Subscription): Promise<void> {
   const startedAt = Date.now();
   const base = `repos/${sub.root.owner}/${sub.root.repo}/issues/${sub.root.number}`;
-  const since = sub.lastSuccessAt === null ? "" : `&since=${new Date(sub.lastSuccessAt - intervalMs).toISOString()}`;
-  const subIssues = asArray<FetchedSubIssue>(await gh(["api", `${base}/sub_issues?per_page=100`]), "sub-issues");
-  const comments = asArray<FetchedComment>(await gh(["api", `${base}/comments?per_page=100${since}`]), "comments");
+  const since =
+    sub.lastSuccessAt === null
+      ? ""
+      : `&since=${new Date(sub.lastSuccessAt - intervalMs).toISOString()}`;
+  const subIssues = asArray<FetchedSubIssue>(
+    await gh(["api", `${base}/sub_issues?per_page=100`]),
+    "sub-issues",
+  );
+  const comments = asArray<FetchedComment>(
+    await gh(["api", `${base}/comments?per_page=100${since}`]),
+    "comments",
+  );
   const config = { root: sub.root.label, allowlist: allowlist ?? new Set<string>() };
   const { next, events } = diff(sub.snapshot, { subIssues, comments }, config);
   sub.snapshot = next;
@@ -161,6 +185,7 @@ async function poll(): Promise<void> {
     return;
   }
   // `subscribe` can run between roots, so each one is looked up again rather than held from the start.
+  // oxlint-disable-next-line unicorn/no-useless-spread -- snapshot: the map can be replaced mid-loop
   for (const label of [...subscriptions.keys()]) {
     const sub = subscriptions.get(label);
     if (sub === undefined) continue;

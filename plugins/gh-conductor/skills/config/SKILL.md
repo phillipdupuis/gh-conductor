@@ -25,5 +25,5 @@ file (via the CLI — never read or write `.gh-conductor.toml` directly).
    `--confirmed` when the value was inferred and confirmed rather than stated outright.
 4. **Precedence: proximate wins.** In-session instructions > the user's CLAUDE.md > workspace
    config > shipped defaults. Cross-layer conflicts resolve silently in that order — never ask.
-   Ask only when two instructions *within* a layer contradict each other.
+   Ask only when two instructions _within_ a layer contradict each other.
 5. **(future)** Offer the settings form in the web UI for see-everything-edit-yourself.

@@ -64,7 +64,10 @@ export function effectiveConfig(file: ConfigFile | null): EffectiveSetting[] {
 }
 
 /** Parse a `config set` value string against the key's schema. Returns undefined if invalid. */
-export function coerceSettingValue(key: SettingKey, raw: string): boolean | number | string | undefined {
+export function coerceSettingValue(
+  key: SettingKey,
+  raw: string,
+): boolean | number | string | undefined {
   const candidates: unknown[] = [];
   if (raw === "true") candidates.push(true);
   if (raw === "false") candidates.push(false);
@@ -91,9 +94,15 @@ export function emitToml(file: ConfigFile): string {
     const value = file[key];
     if (value !== undefined) lines.push(`${key} = ${JSON.stringify(value)}`);
   }
-  const provenance = Object.entries(file.provenance ?? {}).filter(([key]) => file[key as SettingKey] !== undefined);
+  const provenance = Object.entries(file.provenance ?? {}).filter(
+    ([key]) => file[key as SettingKey] !== undefined,
+  );
   if (provenance.length > 0) {
-    lines.push("", "# stated = the user said so; confirmed = the agent inferred it and the user confirmed.", "[provenance]");
+    lines.push(
+      "",
+      "# stated = the user said so; confirmed = the agent inferred it and the user confirmed.",
+      "[provenance]",
+    );
     for (const [key, value] of provenance) lines.push(`${key} = ${JSON.stringify(value)}`);
   }
   return `${lines.join("\n")}\n`;

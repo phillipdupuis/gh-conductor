@@ -35,17 +35,22 @@ export function App() {
   const categories = useMemo(() => {
     const out = new Map<string, Category>();
     if (!view) return out;
-    for (const n of [...view.graph.nodes, ...view.graph.related]) out.set(keyOf(n), categorize(n, view.graph));
+    for (const n of [...view.graph.nodes, ...view.graph.related])
+      out.set(keyOf(n), categorize(n, view.graph));
     return out;
   }, [view]);
 
   const adj = useMemo(() => (view ? adjacency(view.graph) : null), [view]);
-  const traced: Trace | null = useMemo(() => (hover !== null && adj ? trace(hover, adj) : null), [hover, adj]);
+  const traced: Trace | null = useMemo(
+    () => (hover !== null && adj ? trace(hover, adj) : null),
+    [hover, adj],
+  );
 
   const issues = useMemo(() => {
     const out = new Map<string, Issue>();
     if (!view) return out;
-    for (const n of [view.graph.root, ...view.graph.nodes, ...view.graph.related]) out.set(keyOf(n), n);
+    for (const n of [view.graph.root, ...view.graph.nodes, ...view.graph.related])
+      out.set(keyOf(n), n);
     return out;
   }, [view]);
 
@@ -59,7 +64,10 @@ export function App() {
     }
   }, [view]);
   const layers = layered?.layers ?? null;
-  const layout = useMemo(() => (view && layers ? layoutGraph(view.graph, layers, expanded) : null), [view, layers, expanded]);
+  const layout = useMemo(
+    () => (view && layers ? layoutGraph(view.graph, layers, expanded) : null),
+    [view, layers, expanded],
+  );
 
   // The route loader sets the issue before this ever renders; the guard only narrows the type.
   if (!issue) return null;
@@ -80,17 +88,45 @@ export function App() {
       <div className="flex min-h-0 flex-1">
         {view && (
           <>
-            <Sidebar graph={view.graph} categories={categories} traced={traced} onHover={setHover} onSelect={setSelected} />
+            <Sidebar
+              graph={view.graph}
+              categories={categories}
+              traced={traced}
+              onHover={setHover}
+              onSelect={setSelected}
+            />
             {layout ? (
-              <GraphCanvas graph={view.graph} layout={layout} categories={categories} traced={traced} onHover={setHover} onSelect={setSelected} onExpand={expand} onCollapse={collapse} />
+              <GraphCanvas
+                graph={view.graph}
+                layout={layout}
+                categories={categories}
+                traced={traced}
+                onHover={setHover}
+                onSelect={setSelected}
+                onExpand={expand}
+                onCollapse={collapse}
+              />
             ) : (
-              <p className="m-auto max-w-md text-sm text-destructive">Can't lay out this issue: {layered?.error}</p>
+              <p className="m-auto max-w-md text-sm text-destructive">
+                Can't lay out this issue: {layered?.error}
+              </p>
             )}
           </>
         )}
-        {!view && load.status === "loading" && <p className="m-auto text-sm text-muted-foreground">Loading #{issue.number} from GitHub…</p>}
+        {!view && load.status === "loading" && (
+          <p className="m-auto text-sm text-muted-foreground">
+            Loading #{issue.number} from GitHub…
+          </p>
+        )}
       </div>
-      {view && <IssueSheet issue={selected !== null ? (issues.get(selected) ?? null) : null} graph={view.graph} onClose={() => setSelected(null)} onSelect={setSelected} />}
+      {view && (
+        <IssueSheet
+          issue={selected !== null ? (issues.get(selected) ?? null) : null}
+          graph={view.graph}
+          onClose={() => setSelected(null)}
+          onSelect={setSelected}
+        />
+      )}
     </div>
   );
 }

@@ -5,7 +5,11 @@ import type { Snapshot } from "./diff.ts";
 
 export type RootIssue = { owner: string; repo: string; number: number; label: string };
 
-export type Subscription = { root: RootIssue; snapshot: Snapshot | null; lastSuccessAt: number | null };
+export type Subscription = {
+  root: RootIssue;
+  snapshot: Snapshot | null;
+  lastSuccessAt: number | null;
+};
 
 export function parseIssueRef(spec: string): RootIssue | null {
   const match = /^([^/\s]+)\/([^#\s]+)#(\d+)$/.exec(spec.trim());

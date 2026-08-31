@@ -18,9 +18,26 @@ import { cn } from "@/lib/utils";
  * shape carries state redundantly with color. Pass `issue` where one exists so the icon can refine
  * (merged vs. plain closed, PR-in-review vs. assigned person).
  */
-export function StatusIcon({ category, issue, size = 14, className }: { category: Category; issue?: Issue; size?: number; className?: string }) {
+export function StatusIcon({
+  category,
+  issue,
+  size = 14,
+  className,
+}: {
+  category: Category;
+  issue?: Issue;
+  size?: number;
+  className?: string;
+}) {
   const Icon = iconOf(category, issue);
-  return <Icon aria-hidden size={size} className={cn("shrink-0", className)} fill={statusColor(category, issue)} />;
+  return (
+    <Icon
+      aria-hidden
+      size={size}
+      className={cn("shrink-0", className)}
+      fill={statusColor(category, issue)}
+    />
+  );
 }
 
 function iconOf(category: Category, issue?: Issue) {
@@ -55,26 +72,60 @@ const PR_COLOR: Record<Pr["state"], string> = {
 };
 
 /** A linked pull request in GitHub's icon and color, with its number. */
-export function PrChip({ pr, size = 12, className }: { pr: Pr; size?: number; className?: string }) {
+export function PrChip({
+  pr,
+  size = 12,
+  className,
+}: {
+  pr: Pr;
+  size?: number;
+  className?: string;
+}) {
   const Icon = PR_ICON[pr.state];
   return (
-    <span className={cn("flex items-center gap-0.5 text-[10px] leading-none text-muted-foreground", className)}>
-      <Icon aria-label={`pull request ${pr.state}`} size={size} fill={PR_COLOR[pr.state]} />
-      #{pr.number}
+    <span
+      className={cn(
+        "flex items-center gap-0.5 text-[10px] leading-none text-muted-foreground",
+        className,
+      )}
+    >
+      <Icon aria-label={`pull request ${pr.state}`} size={size} fill={PR_COLOR[pr.state]} />#
+      {pr.number}
     </span>
   );
 }
 
 /** GitHub avatars, up to `max`, then a "+N" overflow count. */
-export function AvatarStack({ logins, max = 2, size = 16, className }: { logins: string[]; max?: number; size?: number; className?: string }) {
+export function AvatarStack({
+  logins,
+  max = 2,
+  size = 16,
+  className,
+}: {
+  logins: string[];
+  max?: number;
+  size?: number;
+  className?: string;
+}) {
   const shown = logins.slice(0, max);
   const extra = logins.length - shown.length;
   return (
     <span className={cn("flex items-center gap-0.5", className)}>
       {shown.map((l) => (
-        <img key={l} src={`https://github.com/${l}.png?size=${size * 2}`} alt={`@${l}`} title={`@${l}`} width={size} height={size} className="rounded-full" loading="lazy" />
+        <img
+          key={l}
+          src={`https://github.com/${l}.png?size=${size * 2}`}
+          alt={`@${l}`}
+          title={`@${l}`}
+          width={size}
+          height={size}
+          className="rounded-full"
+          loading="lazy"
+        />
       ))}
-      {extra > 0 && <span className="text-[10px] leading-none text-muted-foreground">+{extra}</span>}
+      {extra > 0 && (
+        <span className="text-[10px] leading-none text-muted-foreground">+{extra}</span>
+      )}
     </span>
   );
 }

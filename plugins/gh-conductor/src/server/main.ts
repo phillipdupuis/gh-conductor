@@ -40,7 +40,12 @@ export async function serve(opts: ServeOptions) {
         "/:owner/:repo/:number": index,
         "/api/health": () => {
           touch();
-          const body: Health = { pid: process.pid, port: server.port ?? port, startedAt, root: ROOT };
+          const body: Health = {
+            pid: process.pid,
+            port: server.port ?? port,
+            startedAt,
+            root: ROOT,
+          };
           return Response.json(body);
         },
         "/api/issues/:owner/:repo/:number": async (req) => {
@@ -77,7 +82,11 @@ export async function serve(opts: ServeOptions) {
 if (import.meta.main) {
   const { values } = parseArgs({
     args: process.argv.slice(2),
-    options: { port: { type: "string" }, from: { type: "string" }, idle: { type: "boolean", default: false } },
+    options: {
+      port: { type: "string" },
+      from: { type: "string" },
+      idle: { type: "boolean", default: false },
+    },
   });
   const server = await serve({
     port: values.port ? Number(values.port) : DEFAULT_PORT,

@@ -18,7 +18,17 @@ type Props = {
   onCollapseAll: () => void;
 };
 
-export function Header({ issue, view, layers, expanded, loading, error, onRefresh, onExpandAll, onCollapseAll }: Props) {
+export function Header({
+  issue,
+  view,
+  layers,
+  expanded,
+  loading,
+  error,
+  onRefresh,
+  onExpandAll,
+  onCollapseAll,
+}: Props) {
   const collapsible = (layers ?? []).flatMap((l, i) => (isCollapsible(l) ? [i] : []));
   const allExpanded = collapsible.every((i) => expanded.has(i));
   const noneExpanded = !collapsible.some((i) => expanded.has(i));
@@ -28,7 +38,12 @@ export function Header({ issue, view, layers, expanded, loading, error, onRefres
       <div className="min-w-0 flex-1">
         <h1 className="truncate text-base font-semibold">
           {view ? (
-            <a href={view.graph.root.url} target="_blank" rel="noreferrer" className="hover:underline">
+            <a
+              href={view.graph.root.url}
+              target="_blank"
+              rel="noreferrer"
+              className="hover:underline"
+            >
               #{view.graph.root.number} {view.graph.root.title}
             </a>
           ) : (
@@ -63,7 +78,12 @@ export function Header({ issue, view, layers, expanded, loading, error, onRefres
       </Button>
       {view && (
         <Button variant="ghost" size="icon-sm" asChild>
-          <a href={view.graph.root.url} target="_blank" rel="noreferrer" aria-label="Open issue on GitHub">
+          <a
+            href={view.graph.root.url}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Open issue on GitHub"
+          >
             <ExternalLink />
           </a>
         </Button>

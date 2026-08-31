@@ -34,9 +34,7 @@
       "title": "Decide: Python target version",
       "url": "https://github.com/northbeam/platform/issues/122",
       "state": "closed",
-      "assignees": [
-        "phillipdupuis"
-      ],
+      "assignees": ["phillipdupuis"],
       "blockedBy": [],
       "pr": null,
       "parent": "northbeam/platform#121",
@@ -74,9 +72,7 @@
       "title": "Decide: dependency target versions (pandas, numpy, SQLAlchemy, pyarrow)",
       "url": "https://github.com/northbeam/platform/issues/124",
       "state": "open",
-      "assignees": [
-        "phillipdupuis"
-      ],
+      "assignees": ["phillipdupuis"],
       "blockedBy": [
         {
           "repo": "northbeam/platform",

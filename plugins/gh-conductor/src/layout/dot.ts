@@ -14,7 +14,15 @@
 // never in shape or line style.
 
 import { NODE_HEIGHT, NODE_WIDTH } from "../core/constants.ts";
-import { blockedByText, categorize, keyOf, refLabel, type Category, type Graph, type Issue } from "../core/graph.ts";
+import {
+  blockedByText,
+  categorize,
+  keyOf,
+  refLabel,
+  type Category,
+  type Graph,
+  type Issue,
+} from "../core/graph.ts";
 
 /** GitHub Primer dark palette, so the page reads like github.com. */
 export const PALETTE = {
@@ -34,7 +42,13 @@ export const PALETTE = {
   } satisfies Record<Category, string>,
 } as const;
 
-const FONT: Record<Category, string> = { ready: "#ffffff", in_progress: "#ffffff", waiting: "#ffffff", blocked: "#c9d1d9", done: "#ffffff" };
+const FONT: Record<Category, string> = {
+  ready: "#ffffff",
+  in_progress: "#ffffff",
+  waiting: "#ffffff",
+  blocked: "#c9d1d9",
+  done: "#ffffff",
+};
 
 /**
  * Plain GitHub/PM words, same vocabulary as the page's sidebar. "waiting" covers two sidebar
@@ -62,7 +76,11 @@ export function dq(s: string): string {
 
 /** Escape for text inside a Graphviz HTML-like label. */
 export function esc(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 /** Greedy word wrap for HTML labels (Graphviz doesn't wrap). Returns escaped text joined with <br/>. */
@@ -84,12 +102,17 @@ export function wrap(s: string, width = 30): string {
 const domId = (key: string) => key.replace(/[/#]/g, "-");
 
 /** refLabel for a key, where the Issue itself isn't at hand. */
-const keyLabel = (key: string, rootRepo: string) => (key.startsWith(`${rootRepo}#`) ? key.slice(rootRepo.length) : key);
+const keyLabel = (key: string, rootRepo: string) =>
+  key.startsWith(`${rootRepo}#`) ? key.slice(rootRepo.length) : key;
 
 function tooltip(n: Issue, cat: Category, g: Graph, inGraph: Set<string>): string {
   const parts = [issueLabel(n, cat)];
   // Blockers this graph does not draw are marked "(not shown)".
-  const blocked = blockedByText(n, g, (b) => `${refLabel(b, g.repo)}${inGraph.has(keyOf(b)) ? "" : " (not shown)"}`);
+  const blocked = blockedByText(
+    n,
+    g,
+    (b) => `${refLabel(b, g.repo)}${inGraph.has(keyOf(b)) ? "" : " (not shown)"}`,
+  );
   if (blocked) parts.push(blocked);
   if (n.assignees.length) parts.push(`assigned ${n.assignees.map((a) => `@${a}`).join(", ")}`);
   if (n.pr) parts.push(`PR #${n.pr.number} ${n.pr.state}`);
@@ -123,7 +146,9 @@ export function toDot(g: Graph): string {
   out.push(`  rankdir=BT; bgcolor="transparent"; pad=0.3; nodesep=0.3; ranksep=0.7;`);
   // Fixed-size boxes (1 pt = 1 px in the app), so dot never has to guess text width and the
   // positions it emits match the React nodes exactly. Labels are still there for `graph --dot`.
-  out.push(`  node [shape=box fixedsize=true width=${(NODE_WIDTH / 72).toFixed(4)} height=${(NODE_HEIGHT / 72).toFixed(4)} fontname="Arial" fontsize=10 penwidth=1];`)
+  out.push(
+    `  node [shape=box fixedsize=true width=${(NODE_WIDTH / 72).toFixed(4)} height=${(NODE_HEIGHT / 72).toFixed(4)} fontname="Arial" fontsize=10 penwidth=1];`,
+  );
   out.push(`  edge [fontname="Arial" arrowsize=1 color="${PALETTE.edge}" penwidth=1.8];`);
 
   const rootAttrs = [
@@ -150,7 +175,9 @@ export function toDot(g: Graph): string {
   for (const n of g.nodes) {
     const k = keyOf(n);
     const p = n.parent ?? keyOf(e);
-    out.push(`  ${dq(k)} -> ${dq(p)} [id="tree-${domId(k)}-${domId(p)}" class=${dq(n.state === "closed" ? "tree done" : "tree")} color="${PALETTE.line}" penwidth=1.2 arrowsize=0.7 tooltip=${dq(`${keyLabel(p, g.repo)} is blocked by sub-issue ${refLabel(n, g.repo)}${n.state === "closed" ? " (closed)" : ""}`)}];`);
+    out.push(
+      `  ${dq(k)} -> ${dq(p)} [id="tree-${domId(k)}-${domId(p)}" class=${dq(n.state === "closed" ? "tree done" : "tree")} color="${PALETTE.line}" penwidth=1.2 arrowsize=0.7 tooltip=${dq(`${keyLabel(p, g.repo)} is blocked by sub-issue ${refLabel(n, g.repo)}${n.state === "closed" ? " (closed)" : ""}`)}];`,
+    );
   }
 
   for (const n of drawn) {

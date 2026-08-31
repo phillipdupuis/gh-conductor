@@ -8,7 +8,11 @@ import { join } from "node:path";
 const root = join(import.meta.dir, "..", "..");
 if (!existsSync(join(root, "node_modules"))) {
   console.error("conductor: first run — installing dependencies (bun install)…");
-  const proc = Bun.spawnSync(["bun", "install", "--frozen-lockfile"], { cwd: root, stdout: "ignore", stderr: "inherit" });
+  const proc = Bun.spawnSync(["bun", "install", "--frozen-lockfile"], {
+    cwd: root,
+    stdout: "ignore",
+    stderr: "inherit",
+  });
   if (proc.exitCode !== 0) {
     console.error("conductor: bun install failed");
     process.exit(1);

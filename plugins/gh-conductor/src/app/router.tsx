@@ -25,8 +25,13 @@ function Landing() {
       <div className="max-w-md space-y-3 text-sm text-muted-foreground">
         <h1 className="text-lg font-semibold text-foreground">gh-conductor</h1>
         <p>
-          Open an issue with <code className="rounded bg-muted px-1 py-0.5">gh-conductor view &lt;issue&gt;</code>, or visit{" "}
-          <code className="rounded bg-muted px-1 py-0.5">/&lt;owner&gt;/&lt;repo&gt;/&lt;number&gt;</code>.
+          Open an issue with{" "}
+          <code className="rounded bg-muted px-1 py-0.5">gh-conductor view &lt;issue&gt;</code>, or
+          visit{" "}
+          <code className="rounded bg-muted px-1 py-0.5">
+            /&lt;owner&gt;/&lt;repo&gt;/&lt;number&gt;
+          </code>
+          .
         </p>
       </div>
     </main>

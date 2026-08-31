@@ -39,7 +39,10 @@ commands:
 Never writes to GitHub (\`config set\` writes only the local .gh-conductor.toml).
 Requires gh (>= 2.94) authenticated for the repo.`;
 
-async function resolveIssue(issueArg: string | undefined, repoFlag: string | undefined): Promise<{ repo: Repo; number: number } | null> {
+async function resolveIssue(
+  issueArg: string | undefined,
+  repoFlag: string | undefined,
+): Promise<{ repo: Repo; number: number } | null> {
   const ref = parseIssueRef(issueArg);
   if (!ref) {
     console.error(`error: expected an issue number or URL, got "${issueArg ?? ""}"\n\n${USAGE}`);
@@ -82,7 +85,9 @@ export async function main(argv: string[]): Promise<number> {
     }
     const port = values.port ? Number(values.port) : DEFAULT_PORT;
     const server = await serve({ port, from: values.from, idle: false });
-    console.log(`gh-conductor serve: http://localhost:${server.port}/${values.from ? "local/graph/0" : "<owner>/<repo>/<number>"}`);
+    console.log(
+      `gh-conductor serve: http://localhost:${server.port}/${values.from ? "local/graph/0" : "<owner>/<repo>/<number>"}`,
+    );
     await new Promise(() => {}); // until Ctrl-C
     return 0;
   }
@@ -101,10 +106,16 @@ export async function main(argv: string[]): Promise<number> {
     const [, sub, key, value] = positionals;
     if (sub === "set") {
       if (!key || value === undefined || !settingKeys.includes(key as SettingKey)) {
-        console.error(`error: expected \`config set <key> <value>\` with key one of: ${settingKeys.join(", ")}\n\n${USAGE}`);
+        console.error(
+          `error: expected \`config set <key> <value>\` with key one of: ${settingKeys.join(", ")}\n\n${USAGE}`,
+        );
         return 2;
       }
-      const result = await setSetting(key as SettingKey, value, values.confirmed ? "confirmed" : "stated");
+      const result = await setSetting(
+        key as SettingKey,
+        value,
+        values.confirmed ? "confirmed" : "stated",
+      );
       if ("error" in result) {
         console.error(`error: ${result.error}`);
         return 2;
@@ -140,7 +151,13 @@ export async function main(argv: string[]): Promise<number> {
 
   switch (cmd) {
     case "graph": {
-      console.log(values.dot ? toDot(graph) : values.json ? JSON.stringify(graph, null, 2) : renderGraph(graph));
+      console.log(
+        values.dot
+          ? toDot(graph)
+          : values.json
+            ? JSON.stringify(graph, null, 2)
+            : renderGraph(graph),
+      );
       return 0;
     }
     case "ready": {
@@ -150,8 +167,19 @@ export async function main(argv: string[]): Promise<number> {
     }
     case "status": {
       if (values.json) {
-        const withCategory = (ns: Issue[]) => ns.map((n) => ({ ...n, category: categorize(n, graph) }));
-        console.log(JSON.stringify({ root: graph.root, nodes: withCategory(graph.nodes), related: withCategory(graph.related) }, null, 2));
+        const withCategory = (ns: Issue[]) =>
+          ns.map((n) => ({ ...n, category: categorize(n, graph) }));
+        console.log(
+          JSON.stringify(
+            {
+              root: graph.root,
+              nodes: withCategory(graph.nodes),
+              related: withCategory(graph.related),
+            },
+            null,
+            2,
+          ),
+        );
       } else {
         console.log(renderStatus(graph));
       }

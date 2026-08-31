@@ -19,27 +19,66 @@ const DOCS = 145;
 const repoOf = (n: number): string => (n === UV ? UV_REPO : REPO);
 const key = (n: number): string => `${repoOf(n)}#${n}`;
 
-const CUSTOMERS = ["Halcyon Freight", "Bluefin Grocers", "Orrin Health", "Tidewater Energy", "Kestrel Media", "Marlowe Insurance", "Sable Logistics", "Pinecrest Retail", "Vantage Telecom", "Lumen Labs"];
+const CUSTOMERS = [
+  "Halcyon Freight",
+  "Bluefin Grocers",
+  "Orrin Health",
+  "Tidewater Energy",
+  "Kestrel Media",
+  "Marlowe Insurance",
+  "Sable Logistics",
+  "Pinecrest Retail",
+  "Vantage Telecom",
+  "Lumen Labs",
+];
 
 type Spec = { number: number; title: string; parent: number; blockedBy?: number[] };
 
 const SPECS: Spec[] = [
   { number: 121, title: "Target versions", parent: ROOT },
   { number: 122, title: "Decide: Python target version", parent: 121 },
-  { number: 123, title: "Audit dependencies for compatibility with the target", parent: 121, blockedBy: [122] },
-  { number: 124, title: "Decide: dependency target versions (pandas, numpy, SQLAlchemy, pyarrow)", parent: 121, blockedBy: [123] },
+  {
+    number: 123,
+    title: "Audit dependencies for compatibility with the target",
+    parent: 121,
+    blockedBy: [122],
+  },
+  {
+    number: 124,
+    title: "Decide: dependency target versions (pandas, numpy, SQLAlchemy, pyarrow)",
+    parent: 121,
+    blockedBy: [123],
+  },
   { number: 125, title: "Risk & regression plan", parent: ROOT },
   { number: 126, title: "Enumerate breaking changes and risks", parent: 125, blockedBy: [121] },
   { number: 127, title: "Regression test plan: core infra", parent: 125, blockedBy: [126] },
   { number: 128, title: "Regression test plan: customer code", parent: 125, blockedBy: [126] },
-  { number: 129, title: "Upgrade core infra to target versions", parent: ROOT, blockedBy: [125, UV] },
+  {
+    number: 129,
+    title: "Upgrade core infra to target versions",
+    parent: ROOT,
+    blockedBy: [125, UV],
+  },
   { number: 130, title: "Customer migrations", parent: ROOT },
-  ...CUSTOMERS.map((c, i) => ({ number: 131 + i, title: `Migrate ${c} to target versions`, parent: 130, blockedBy: [129] })),
-  { number: 141, title: "Retire old Python runtime (base images, CI matrix, compat shims)", parent: ROOT, blockedBy: [130] },
+  ...CUSTOMERS.map((c, i) => ({
+    number: 131 + i,
+    title: `Migrate ${c} to target versions`,
+    parent: 130,
+    blockedBy: [129],
+  })),
+  {
+    number: 141,
+    title: "Retire old Python runtime (base images, CI matrix, compat shims)",
+    parent: ROOT,
+    blockedBy: [130],
+  },
 ];
 
 /** Reached from the tree by one blocked-by hop, in either direction; neither is a sub-issue of the root. */
-const RELATED: { number: number; blockedBy?: number[] }[] = [{ number: UV }, { number: DOCS, blockedBy: [141] }];
+const RELATED: { number: number; blockedBy?: number[] }[] = [
+  { number: UV },
+  { number: DOCS, blockedBy: [141] },
+];
 
 const TITLES: Record<number, string> = {
   [ROOT]: "Upgrade Python version",
@@ -52,7 +91,11 @@ const TITLES: Record<number, string> = {
 type Status = { state?: IssueState; assignees?: string[]; pr?: Pr };
 const me = { assignees: [VIEWER] };
 const done = { state: "closed" as const };
-const pr = (number: number, state: Pr["state"]): Pr => ({ number, url: `https://github.com/${REPO}/pull/${number}`, state });
+const pr = (number: number, state: Pr["state"]): Pr => ({
+  number,
+  url: `https://github.com/${REPO}/pull/${number}`,
+  state,
+});
 const merged = (n: number) => ({ ...done, pr: pr(n, "merged") });
 
 const STATUS: Record<Stage, Record<number, Status>> = {
@@ -105,7 +148,13 @@ export function upgradePython(stage: Stage): Graph {
   const status = STATUS[stage];
   const stateOf = (n: number): IssueState => status[n]?.state ?? "open";
   const url = (n: number) => `https://github.com/${repoOf(n)}/issues/${n}`;
-  const blocker = (n: number): Blocker => ({ repo: repoOf(n), number: n, title: TITLES[n]!, url: url(n), state: stateOf(n) });
+  const blocker = (n: number): Blocker => ({
+    repo: repoOf(n),
+    number: n,
+    title: TITLES[n]!,
+    url: url(n),
+    state: stateOf(n),
+  });
   const depth = (s: Spec): number => (s.parent === ROOT ? 1 : 2);
   const node = (s: Spec): Issue => ({
     repo: REPO,
@@ -136,14 +185,28 @@ export function upgradePython(stage: Stage): Graph {
   // Depth-first in sub-issue order, as loadGraph would return it.
   const byParent = new Map<number, Spec[]>();
   for (const s of SPECS) byParent.set(s.parent, [...(byParent.get(s.parent) ?? []), s]);
-  const walk = (parent: number): Issue[] => (byParent.get(parent) ?? []).flatMap((s) => [node(s), ...walk(s.number)]);
+  const walk = (parent: number): Issue[] =>
+    (byParent.get(parent) ?? []).flatMap((s) => [node(s), ...walk(s.number)]);
   return {
     repo: REPO,
     viewer: VIEWER,
-    root: { repo: REPO, number: ROOT, title: TITLES[ROOT]!, url: url(ROOT), state: "open", assignees: [], blockedBy: [], pr: null, parent: null, depth: 0, updatedAt: updatedAt(ROOT, stage) },
+    root: {
+      repo: REPO,
+      number: ROOT,
+      title: TITLES[ROOT]!,
+      url: url(ROOT),
+      state: "open",
+      assignees: [],
+      blockedBy: [],
+      pr: null,
+      parent: null,
+      depth: 0,
+      updatedAt: updatedAt(ROOT, stage),
+    },
     nodes: walk(ROOT),
     related: [...RELATED].sort((a, b) => key(a.number).localeCompare(key(b.number))).map(related),
   };
 }
 
-export const fixturePath = (stage: Stage): string => `${import.meta.dir}/upgrade-python-${stage}.json`;
+export const fixturePath = (stage: Stage): string =>
+  `${import.meta.dir}/upgrade-python-${stage}.json`;

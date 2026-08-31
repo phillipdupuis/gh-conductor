@@ -5,7 +5,13 @@ import type { Graph, Issue } from "../../core/schema.ts";
 import { AvatarStack, PrChip } from "./StatusIcon.tsx";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -18,11 +24,21 @@ type Props = {
 export function IssueSheet({ issue, graph, onClose, onSelect }: Props) {
   const isRoot = issue !== null && keyOf(issue) === keyOf(graph.root);
   const inGraph = new Set([graph.root, ...graph.nodes, ...graph.related].map(keyOf));
-  const blocks = issue ? [...graph.nodes, ...graph.related].filter((n) => n.blockedBy.some((b) => keyOf(b) === keyOf(issue))) : [];
+  const blocks = issue
+    ? [...graph.nodes, ...graph.related].filter((n) =>
+        n.blockedBy.some((b) => keyOf(b) === keyOf(issue)),
+      )
+    : [];
   const children = issue ? (childrenOf(graph).get(keyOf(issue)) ?? []) : [];
 
   /** A reference to another issue: a jump when it is on the canvas, a github.com link when it is not. */
-  const ref = (n: { repo: string; number: number; title: string; url: string; state: "open" | "closed" }) => {
+  const ref = (n: {
+    repo: string;
+    number: number;
+    title: string;
+    url: string;
+    state: "open" | "closed";
+  }) => {
     const key = keyOf(n);
     const label = (
       <>
@@ -32,11 +48,26 @@ export function IssueSheet({ issue, graph, onClose, onSelect }: Props) {
     return (
       <li key={key} className="flex min-w-0 items-baseline gap-2">
         {inGraph.has(key) ? (
-          <button type="button" onClick={() => onSelect(key)} className={cn("min-w-0 truncate text-left hover:underline", n.state === "closed" && "text-muted-foreground line-through")}>
+          <button
+            type="button"
+            onClick={() => onSelect(key)}
+            className={cn(
+              "min-w-0 truncate text-left hover:underline",
+              n.state === "closed" && "text-muted-foreground line-through",
+            )}
+          >
             {label}
           </button>
         ) : (
-          <a href={n.url} target="_blank" rel="noreferrer" className={cn("min-w-0 truncate hover:underline", n.state === "closed" && "text-muted-foreground line-through")}>
+          <a
+            href={n.url}
+            target="_blank"
+            rel="noreferrer"
+            className={cn(
+              "min-w-0 truncate hover:underline",
+              n.state === "closed" && "text-muted-foreground line-through",
+            )}
+          >
             {label}
           </a>
         )}
@@ -51,7 +82,8 @@ export function IssueSheet({ issue, graph, onClose, onSelect }: Props) {
           <>
             <SheetHeader>
               <SheetTitle className="pr-6 leading-snug break-words">
-                <span className="text-muted-foreground">{refLabel(issue, graph.repo)}</span> {issue.title}
+                <span className="text-muted-foreground">{refLabel(issue, graph.repo)}</span>{" "}
+                {issue.title}
               </SheetTitle>
               <SheetDescription className="flex flex-wrap items-center gap-2">
                 <StatePill state={issue.state} />
@@ -65,7 +97,11 @@ export function IssueSheet({ issue, graph, onClose, onSelect }: Props) {
                 {issue.assignees.length ? (
                   <span className="flex items-center gap-2">
                     <AvatarStack logins={issue.assignees} max={5} />
-                    <span>{issue.assignees.map((a) => (a === graph.viewer ? `@${a} (you)` : `@${a}`)).join(", ")}</span>
+                    <span>
+                      {issue.assignees
+                        .map((a) => (a === graph.viewer ? `@${a} (you)` : `@${a}`))
+                        .join(", ")}
+                    </span>
                   </span>
                 ) : (
                   <Empty>nobody</Empty>
@@ -73,15 +109,33 @@ export function IssueSheet({ issue, graph, onClose, onSelect }: Props) {
               </Field>
               <Field label="Pull request">
                 {issue.pr ? (
-                  <a href={issue.pr.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 hover:underline">
-                    <PrChip pr={issue.pr} size={14} className="text-sm text-foreground" /> <span className="text-muted-foreground">{issue.pr.state}</span>
+                  <a
+                    href={issue.pr.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 hover:underline"
+                  >
+                    <PrChip pr={issue.pr} size={14} className="text-sm text-foreground" />{" "}
+                    <span className="text-muted-foreground">{issue.pr.state}</span>
                   </a>
                 ) : (
                   <Empty>none</Empty>
                 )}
               </Field>
-              <Field label="Blocked by">{issue.blockedBy.length ? <ul className="space-y-1">{issue.blockedBy.map((b) => ref(b))}</ul> : <Empty>nothing</Empty>}</Field>
-              <Field label="Blocks">{blocks.length ? <ul className="space-y-1">{blocks.map((n) => ref(n))}</ul> : <Empty>nothing</Empty>}</Field>
+              <Field label="Blocked by">
+                {issue.blockedBy.length ? (
+                  <ul className="space-y-1">{issue.blockedBy.map((b) => ref(b))}</ul>
+                ) : (
+                  <Empty>nothing</Empty>
+                )}
+              </Field>
+              <Field label="Blocks">
+                {blocks.length ? (
+                  <ul className="space-y-1">{blocks.map((n) => ref(n))}</ul>
+                ) : (
+                  <Empty>nothing</Empty>
+                )}
+              </Field>
               {children.length > 0 && (
                 <Field label="Sub-issues">
                   <ul className="space-y-1">{children.map((n) => ref(n))}</ul>
@@ -114,7 +168,9 @@ function StatePill({ state }: { state: Issue["state"] }) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
       <div>{children}</div>
     </div>
   );

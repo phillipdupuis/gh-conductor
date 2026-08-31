@@ -1,5 +1,17 @@
 import { describe, expect, test } from "bun:test";
-import { categorize, childrenOf, groupByCategory, keyOf, readyNodes, refLabel, relativeTime, summarizePrs, type Blocker, type Graph, type Issue } from "../src/core/graph.ts";
+import {
+  categorize,
+  childrenOf,
+  groupByCategory,
+  keyOf,
+  readyNodes,
+  refLabel,
+  relativeTime,
+  summarizePrs,
+  type Blocker,
+  type Graph,
+  type Issue,
+} from "../src/core/graph.ts";
 
 const REPO = "o/r";
 export const k = (n: number, repo = REPO) => `${repo}#${n}`;
@@ -17,17 +29,49 @@ export const node = (over: Partial<Issue> & { number: number }): Issue => ({
   updatedAt: "2026-08-01T00:00:00Z",
   ...over,
 });
-export const blocker = (number: number, state: Blocker["state"] = "open", repo = REPO): Blocker => ({ repo, number, title: `issue ${number}`, url: `https://example.test/${number}`, state });
-export const graph = (nodes: Issue[], over: Partial<Graph> = {}): Graph => ({ repo: REPO, viewer: "phillip", root: node({ number: 1, depth: 0, parent: null }), nodes, related: [], ...over });
+export const blocker = (
+  number: number,
+  state: Blocker["state"] = "open",
+  repo = REPO,
+): Blocker => ({
+  repo,
+  number,
+  title: `issue ${number}`,
+  url: `https://example.test/${number}`,
+  state,
+});
+export const graph = (nodes: Issue[], over: Partial<Graph> = {}): Graph => ({
+  repo: REPO,
+  viewer: "phillip",
+  root: node({ number: 1, depth: 0, parent: null }),
+  nodes,
+  related: [],
+  ...over,
+});
 
 const g0 = graph([]);
 
 describe("categorize", () => {
   test("closed → done, regardless of anything else", () => {
-    expect(categorize(node({ number: 2, state: "closed", assignees: ["x"], blockedBy: [blocker(9)] }), g0)).toBe("done");
+    expect(
+      categorize(
+        node({ number: 2, state: "closed", assignees: ["x"], blockedBy: [blocker(9)] }),
+        g0,
+      ),
+    ).toBe("done");
   });
   test("open blocker → blocked, even if assigned or has a PR", () => {
-    expect(categorize(node({ number: 2, blockedBy: [blocker(9)], assignees: ["x"], pr: { number: 5, url: "", state: "draft" } }), g0)).toBe("blocked");
+    expect(
+      categorize(
+        node({
+          number: 2,
+          blockedBy: [blocker(9)],
+          assignees: ["x"],
+          pr: { number: 5, url: "", state: "draft" },
+        }),
+        g0,
+      ),
+    ).toBe("blocked");
   });
   test("closed blockers don't block", () => {
     expect(categorize(node({ number: 2, blockedBy: [blocker(9, "closed")] }), g0)).toBe("ready");
@@ -36,18 +80,29 @@ describe("categorize", () => {
     expect(categorize(node({ number: 2, assignees: ["phillip"] }), g0)).toBe("waiting");
   });
   test("PR ready for review → waiting on a human", () => {
-    expect(categorize(node({ number: 2, pr: { number: 5, url: "", state: "review" } }), g0)).toBe("waiting");
+    expect(categorize(node({ number: 2, pr: { number: 5, url: "", state: "review" } }), g0)).toBe(
+      "waiting",
+    );
   });
   test("draft PR → in progress", () => {
-    expect(categorize(node({ number: 2, pr: { number: 5, url: "", state: "draft" } }), g0)).toBe("in_progress");
+    expect(categorize(node({ number: 2, pr: { number: 5, url: "", state: "draft" } }), g0)).toBe(
+      "in_progress",
+    );
   });
   test("nothing started, nobody assigned → ready", () => {
     expect(categorize(node({ number: 2 }), g0)).toBe("ready");
   });
   test("a parent is blocked by its open sub-issues; free once they are all closed", () => {
-    const open = graph([node({ number: 2 }), node({ number: 3, parent: k(2), depth: 2 }), node({ number: 4, parent: k(2), depth: 2, state: "closed" })]);
+    const open = graph([
+      node({ number: 2 }),
+      node({ number: 3, parent: k(2), depth: 2 }),
+      node({ number: 4, parent: k(2), depth: 2, state: "closed" }),
+    ]);
     expect(categorize(open.nodes[0]!, open)).toBe("blocked");
-    const closed = graph([node({ number: 2 }), node({ number: 3, parent: k(2), depth: 2, state: "closed" })]);
+    const closed = graph([
+      node({ number: 2 }),
+      node({ number: 3, parent: k(2), depth: 2, state: "closed" }),
+    ]);
     expect(categorize(closed.nodes[0]!, closed)).toBe("ready");
   });
 });
@@ -74,7 +129,10 @@ describe("readyNodes", () => {
 
 describe("related", () => {
   const g = graph([node({ number: 2 })], {
-    related: [node({ number: 9, parent: null, depth: 0 }), node({ number: 10, parent: null, depth: 0, blockedBy: [blocker(11, "open", "other/repo")] })],
+    related: [
+      node({ number: 9, parent: null, depth: 0 }),
+      node({ number: 10, parent: null, depth: 0, blockedBy: [blocker(11, "open", "other/repo")] }),
+    ],
   });
   test("never ready work, never in a status section, never anybody's sub-issue", () => {
     expect(readyNodes(g).map(keyOf)).toEqual([k(2)]);
@@ -99,12 +157,21 @@ describe("keyOf / refLabel", () => {
 });
 
 describe("summarizePrs", () => {
-  const pr = (number: number, state: "OPEN" | "CLOSED" | "MERGED", isDraft = false) => ({ number, url: "", isDraft, state });
+  const pr = (number: number, state: "OPEN" | "CLOSED" | "MERGED", isDraft = false) => ({
+    number,
+    url: "",
+    isDraft,
+    state,
+  });
   test("none", () => expect(summarizePrs([])).toBeNull());
-  test("merged beats everything", () => expect(summarizePrs([pr(1, "OPEN", true), pr(2, "MERGED")])?.state).toBe("merged"));
-  test("open non-draft → review", () => expect(summarizePrs([pr(1, "OPEN", true), pr(2, "OPEN")])?.state).toBe("review"));
-  test("only drafts → draft", () => expect(summarizePrs([pr(1, "OPEN", true)])?.state).toBe("draft"));
-  test("only closed → closed (abandoned)", () => expect(summarizePrs([pr(1, "CLOSED")])?.state).toBe("closed"));
+  test("merged beats everything", () =>
+    expect(summarizePrs([pr(1, "OPEN", true), pr(2, "MERGED")])?.state).toBe("merged"));
+  test("open non-draft → review", () =>
+    expect(summarizePrs([pr(1, "OPEN", true), pr(2, "OPEN")])?.state).toBe("review"));
+  test("only drafts → draft", () =>
+    expect(summarizePrs([pr(1, "OPEN", true)])?.state).toBe("draft"));
+  test("only closed → closed (abandoned)", () =>
+    expect(summarizePrs([pr(1, "CLOSED")])?.state).toBe("closed"));
 });
 
 describe("relativeTime", () => {
@@ -118,5 +185,6 @@ describe("relativeTime", () => {
     expect(relativeTime("2026-04-29T12:00:00Z", now)).toBe("4mo ago");
     expect(relativeTime("2024-08-29T12:00:00Z", now)).toBe("2y ago");
   });
-  test("future clamps to just now", () => expect(relativeTime("2027-01-01T00:00:00Z", now)).toBe("just now"));
+  test("future clamps to just now", () =>
+    expect(relativeTime("2027-01-01T00:00:00Z", now)).toBe("just now"));
 });

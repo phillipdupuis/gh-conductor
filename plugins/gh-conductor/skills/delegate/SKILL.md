@@ -3,7 +3,7 @@ name: delegate
 description: Decide who should work an issue — this agent or a specific human — and route it with native GitHub assignment. Use when creating issues, when a question needs a particular person's answer, or when ready work may already belong to someone else.
 ---
 
-> **Stub.** Steps are placeholders — and this skill is deliberately thin in v0: with one shared GitHub identity nothing can be assigned *to* the agent, so delegation reduces to routing among humans and deciding what the agent may take on its own. Its full weight arrives with multi-agent dispatch.
+> **Stub.** Steps are placeholders — and this skill is deliberately thin in v0: with one shared GitHub identity nothing can be assigned _to_ the agent, so delegation reduces to routing among humans and deciding what the agent may take on its own. Its full weight arrives with multi-agent dispatch.
 
 **Moment:** the recurring "who?" decision inside `plan`, `clarify`, and `advance`.
 
