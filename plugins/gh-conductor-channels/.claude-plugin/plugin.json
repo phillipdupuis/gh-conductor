@@ -1,0 +1,11 @@
+{
+  "name": "gh-conductor-channels",
+  "version": "0.0.1",
+  "description": "Experimental (research preview): channels that push gh-conductor issue events (sub-issue state changes, comments on the watched issue) into a running Claude Code session.",
+  "author": {
+    "name": "Phillip Dupuis",
+    "url": "https://github.com/phillipdupuis"
+  },
+  "repository": "https://github.com/phillipdupuis/gh-conductor",
+  "keywords": ["github", "issues", "channels", "mcp", "agents"]
+}

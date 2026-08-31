@@ -1,0 +1,18 @@
+{
+  "name": "gh-conductor-channels",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Experimental (research preview): channels that push gh-conductor epic events into a running Claude Code session. Requires bun and gh.",
+  "scripts": {
+    "test": "bun test",
+    "check": "bun x tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0"
+  },
+  "devDependencies": {
+    "bun-types": "^1.4.0",
+    "typescript": "^7.0.2"
+  }
+}

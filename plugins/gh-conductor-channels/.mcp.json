@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "gh-conductor-channels": {
+      "command": "bun",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/src/main.ts"]
+    }
+  }
+}

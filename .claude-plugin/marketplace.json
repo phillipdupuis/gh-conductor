@@ -10,6 +10,11 @@
       "name": "gh-conductor",
       "description": "Breaks a large feature into GitHub Issues, wires them as a DAG with sub-issues and blocked-by dependencies, and keeps agents and humans pointed at the next ready step.",
       "source": "./plugins/gh-conductor"
+    },
+    {
+      "name": "gh-conductor-channels",
+      "description": "Experimental (research preview): channels that push gh-conductor issue events (sub-issue state changes, comments on the watched issue) into a running Claude Code session.",
+      "source": "./plugins/gh-conductor-channels"
     }
   ]
 }
