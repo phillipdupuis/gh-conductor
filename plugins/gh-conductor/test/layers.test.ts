@@ -11,7 +11,7 @@ const layers = layersOf(g);
 const at = layerOf(layers);
 
 describe("layersOf (upgrade-python-mid)", () => {
-  test("nothing blocking → layer 0; each blocker pushes one layer up", () => {
+  test("the critical path starts at layer 0 and climbs one layer per link", () => {
     expect(at.get(k(122))).toBe(0);
     expect(at.get(k(123))).toBe(1);
     expect(at.get(k(124))).toBe(2);
@@ -34,14 +34,36 @@ describe("layersOf (upgrade-python-mid)", () => {
     const order = new Map([g.epic, ...g.nodes, ...g.related].map((n, i) => [keyOf(n), i]));
     for (const layer of layers) expect([...layer].sort((a, b) => order.get(a)! - order.get(b)!)).toEqual(layer);
   });
-  test("a blocker in another repo lands in the bottom band and pushes what it blocks up", () => {
-    // #129 is blocked by devops#57 as well as by #125; nothing blocks #57 itself.
-    expect(at.get(k(57, "northbeam/devops"))).toBe(0);
-    expect(at.get(k(129))!).toBeGreaterThan(at.get(k(125))!);
-    expect(at.get(k(129))!).toBeGreaterThan(at.get(k(57, "northbeam/devops"))!);
+  test("a blocker with slack floats up to just below its only dependent", () => {
+    // #129 is blocked by devops#57 as well as by #125; nothing blocks #57 itself, so it could start
+    // at the bottom — but it is not needed until #129, so it bands directly under it.
+    expect(at.get(k(57, "northbeam/devops"))).toBe(at.get(k(129))! - 1);
+    expect(at.get(k(129))!).toBe(at.get(k(125))! + 1);
   });
   test("a related issue nothing here waits on bands one above the epic", () => {
     expect(at.get(k(145))).toBe(at.get(k(120))! + 1);
+  });
+});
+
+describe("as late as possible", () => {
+  test("an unblocked node sits directly under its only dependent, not at the bottom", () => {
+    const issue = (number: number, blockedBy: number[]): Issue => ({
+      ...g.nodes[0]!,
+      repo: "o/r",
+      number,
+      title: `#${number}`,
+      parent: "o/r#1",
+      depth: 1,
+      blockedBy: blockedBy.map((n) => ({ repo: "o/r", number: n, title: `#${n}`, url: "", state: "open" as const })),
+      pr: null,
+      assignees: [],
+    });
+    // #2 → #3 → #4 → #5 is the critical path; #9 has no blockers but only #5 needs it.
+    const nodes = [issue(2, []), issue(3, [2]), issue(4, [3]), issue(5, [4, 9]), issue(9, [])];
+    const epic: Issue = { ...issue(1, []), parent: null, depth: 0 };
+    const at2 = layerOf(layersOf({ repo: "o/r", viewer: null, epic, nodes, related: [] }));
+    expect([2, 3, 4, 5].map((n) => at2.get(`o/r#${n}`))).toEqual([0, 1, 2, 3]);
+    expect(at2.get("o/r#9")).toBe(at2.get("o/r#5")! - 1);
   });
 });
 

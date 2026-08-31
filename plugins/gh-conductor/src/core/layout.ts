@@ -1,5 +1,5 @@
-// Layers → positions. A grid of layer rows, the epic's row at y = 0 and layer 0 at the bottom, so
-// every edge points up. A row is one of:
+// Layers → positions. A grid of layer rows, the last layer at y = 0 and layer 0 at the bottom, so
+// every edge points up and a node's row is the point it is needed by. A row is one of:
 //   single    — at most COLLAPSE_THRESHOLD issues: plain issue nodes, never collapsible.
 //   collapsed — one list node (`layer-<i>`) standing in for all of the layer's issues.
 //   expanded  — one column per issue inside a frame, with a "Collapse" pill as a tab on the frame's top edge.

@@ -1,7 +1,9 @@
-// DAG layers for the pipeline view. An issue's layer is one more than the highest layer among the
-// things it depends on; layer 0 depends on nothing. "Depends on" = blocked by (within the graph) or
-// contains (a parent can't close before its children), so a parent sits above its sub-issues and the
-// epic is alone at the top. `toposort` / `toLayers` are ported from aidag's engine/graph-utils.
+// DAG layers for the pipeline view. An issue sits as late as its dependents allow — one layer below
+// the lowest thing that waits on it — so its position reads "needed by here", not "could start here"
+// (startability is the ready category's job). Slack floats up toward the consumer; the critical path
+// is the one chain that spans every layer. "Depends on" = blocked by (within the graph) or contains
+// (a parent can't close before its children), so a parent sits above its sub-issues.
+// `toposort` / `toLayers` are ported from aidag's engine/graph-utils.
 
 import { keyOf } from "./graph.ts";
 import type { Graph } from "./schema.ts";
@@ -41,26 +43,32 @@ export function toposort(keys: string[], deps: Deps): string[] {
   return [...sorted];
 }
 
-/** Group keys into layers: layers[i] depends only on layers[0..i-1]. Order within a layer = toposort order. */
+/**
+ * Group keys into layers: layers[i] depends only on layers[0..i-1], and every key sits as high as it
+ * can while staying strictly below all of its dependents. `height` is the longest path up to a sink;
+ * the layer is that counted down from the tallest. Order within a layer = toposort order.
+ */
 export function toLayers(keys: string[], deps: Deps): string[][] {
   const sortedKeys = toposort(keys, deps);
-  const layerOf = new Map<string, number>();
-  for (const key of sortedKeys) {
+  const dependents = new Map<string, string[]>(sortedKeys.map((key) => [key, []]));
+  for (const key of sortedKeys) for (const dep of deps.get(key)!) dependents.get(dep)!.push(key);
+  const height = new Map<string, number>();
+  let top = -1;
+  for (let i = sortedKeys.length - 1; i >= 0; i--) {
+    const key = sortedKeys[i]!;
     let max = -1;
-    for (const dep of deps.get(key)!) max = Math.max(max, layerOf.get(dep)!);
-    layerOf.set(key, max + 1);
+    for (const d of dependents.get(key)!) max = Math.max(max, height.get(d)!);
+    height.set(key, max + 1);
+    top = Math.max(top, max + 1);
   }
   const layers: string[][] = [];
-  for (const key of sortedKeys) {
-    const i = layerOf.get(key)!;
-    (layers[i] ??= []).push(key);
-  }
+  for (const key of sortedKeys) (layers[top - height.get(key)!] ??= []).push(key);
   return layers;
 }
 
 /**
- * The graph's layers, index 0 = bottom (nothing blocking it), last = the epic. Each layer lists
- * issue keys in graph order (the depth-first sub-issue order the sidebar uses).
+ * The graph's layers, index 0 = bottom (the start of the longest chain), last = the final sink.
+ * Each layer lists issue keys in graph order (the depth-first sub-issue order the sidebar uses).
  */
 export function layersOf(g: Graph): string[][] {
   const all = [g.epic, ...g.nodes, ...g.related];
@@ -74,8 +82,8 @@ export function layersOf(g: Graph): string[][] {
     }
   }
   for (const n of g.nodes) (deps.get(n.parent ?? keyOf(g.epic)) as Set<string>).add(keyOf(n));
-  // A related issue nothing here is blocked by has no dependency to lift it, so it would tie with
-  // the epic's layer and read as parallel work. Make it depend on the epic: downstream of everything.
+  // A related issue nothing here is blocked by has no dependent to hold it down, so it would tie
+  // with the epic's layer and read as parallel work. Make it depend on the epic: downstream of everything.
   const blockerKeys = new Set(all.flatMap((n) => n.blockedBy.map(keyOf).filter((k) => order.has(k))));
   for (const x of g.related) if (!blockerKeys.has(keyOf(x))) (deps.get(keyOf(x)) as Set<string>).add(keyOf(g.epic));
   const byOrder = (a: string, b: string) => order.get(a)! - order.get(b)!;
