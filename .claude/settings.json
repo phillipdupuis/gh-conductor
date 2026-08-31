@@ -1,0 +1,14 @@
+{
+  "extraKnownMarketplaces": {
+    "gh-conductor": {
+      "source": {
+        "source": "directory",
+        "path": "./"
+      },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": {
+    "gh-conductor@gh-conductor": true
+  }
+}
