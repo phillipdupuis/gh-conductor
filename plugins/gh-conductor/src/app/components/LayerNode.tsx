@@ -24,8 +24,15 @@ export type LayerFlowNode = Node<LayerNodeData, "layer">;
 export function LayerNode({ data }: NodeProps<LayerFlowNode>) {
   const { layer, issues, rootRepo, categories, traced, onHover, onSelect, onExpand } = data;
   const hidden = issues.length - MAX_VISIBLE_ROWS;
+  const done = issues.every((n) => categories.get(keyOf(n)) === "done");
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden rounded-lg border bg-card text-xs text-foreground">
+    <div
+      className={cn(
+        "flex h-full w-full flex-col overflow-hidden rounded-lg border bg-card text-xs text-foreground",
+        done && "border-2 opacity-55",
+      )}
+      style={done ? { borderColor: "var(--status-done)" } : undefined}
+    >
       <Handle type="target" position={Position.Bottom} />
       <Handle type="source" position={Position.Top} />
       <ul className="nowheel nodrag min-h-0 flex-1 overflow-y-auto">
