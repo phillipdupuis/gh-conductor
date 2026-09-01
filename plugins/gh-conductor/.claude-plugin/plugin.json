@@ -7,5 +7,6 @@
     "url": "https://github.com/phillipdupuis"
   },
   "repository": "https://github.com/phillipdupuis/gh-conductor",
+  "license": "MIT",
   "keywords": ["github", "issues", "project-management", "agents", "dag"]
 }

@@ -1,16 +1,16 @@
 .DS_Store
 
+# Claude Code-created worktrees
+.claude/worktrees/
+
 # local-only, never commit
 docs/
-
-# Claude Code-created worktrees (herdr drives worktrees here; this is insurance)
-.claude/worktrees/
 
 # Local-only files, industry-standard .local convention (CLAUDE.local.md, settings.local.json, .env.local)
 *.local
 *.local.*
 
-# Phillip's personal skills/agents/notes — local-only, easy to spot and invoke (/pdupuis-foo)
+# personal local-only skills/notes (pdupuis-*)
 pdupuis-*
 
 # Dependencies (bun)
