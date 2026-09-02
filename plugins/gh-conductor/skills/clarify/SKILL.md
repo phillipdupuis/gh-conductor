@@ -8,6 +8,6 @@ description: Resolve an unknown that stands in the way of progress. Use when blo
 ## Steps
 
 1. **Pick the branch:** can the repo, history, or tools answer this? Investigate in place and record the findings where the work lives.
-2. **Only a human can answer** → write the question as an issue: Known / Unknown / Recommendation (a real pick, with the reason).
+2. **Only a human can answer** → write the question as an issue: Known / Unknown / Recommendation (a real pick, with the reason). When `confirm_writes` is on (`bun ${CLAUDE_PLUGIN_ROOT}/dist/gh-conductor.js config --json`), show the drafted issue and wait for a yes before creating it.
 3. **Wire the edges** — blocked-by from every issue whose work depends on the answer — and route it to whoever's call it is (see `delegate`).
 4. **Keep moving** — return to whatever is still ready (`advance`); never sit and wait.

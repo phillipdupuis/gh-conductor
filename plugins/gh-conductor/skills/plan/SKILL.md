@@ -9,6 +9,6 @@ description: Turn a fuzzy ask into an actionable issue graph — deliverable chu
 
 1. **Look before you ask** — read the code the ask touches; know what exists, what's missing, where the work would live.
 2. **Cut into chunks** — each one deliverable PR with a checkable Done-when; note which builds on which (those are the edges). Chunks are not decomposed further.
-3. **Materialize on GitHub** — create the parent issue, then each chunk as a sub-issue with its blocked-by edges. Issues first, chat never (chat doesn't survive a context reset).
+3. **Materialize on GitHub** — create the parent issue, then each chunk as a sub-issue with its blocked-by edges. Issues first, chat never (chat doesn't survive a context reset). When `confirm_writes` is on (`bun ${CLAUDE_PLUGIN_ROOT}/dist/gh-conductor.js config --json`), show the parent and the chunk list with its edges and wait for a yes before creating anything.
 4. **Route each issue** to whoever should own it (see `delegate`).
 5. **Verify the graph** — every chunk present, edges as intended, the first chunk(s) ready — then hand off to `advance`.

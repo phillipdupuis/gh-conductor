@@ -11,7 +11,7 @@ write the file directly.
 
 ## Steps
 
-1. **Read current state** — `bun ${CLAUDE_PLUGIN_ROOT}/src/cli/main.ts config --json`: every
+1. **Read current state** — `bun ${CLAUDE_PLUGIN_ROOT}/dist/gh-conductor.js config --json`: every
    setting, its effective value, and where it came from (shipped default vs. workspace file,
    stated vs. confirmed).
 2. **Onboarding (no config file yet)** — a guided conversation, not a form: ask a high-leverage
@@ -21,7 +21,7 @@ write the file directly.
    CLAUDE.md. Research findings also seed `delegate`'s roster.
 3. **Complaint capture** — when the user corrects a behavior, fix the instance first, then offer:
    "want me to make that permanent?" On yes:
-   `bun ${CLAUDE_PLUGIN_ROOT}/src/cli/main.ts config set <key> <value>`, adding `--confirmed`
+   `bun ${CLAUDE_PLUGIN_ROOT}/dist/gh-conductor.js config set <key> <value>`, adding `--confirmed`
    when the value was inferred and confirmed rather than stated outright.
 4. **Precedence: proximate wins.** In-session instructions > the user's CLAUDE.md > workspace
    config > shipped defaults. Cross-layer conflicts resolve silently in that order — never ask.

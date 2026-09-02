@@ -9,6 +9,6 @@ Which work the agent takes autonomously, who answers what, and the team roster a
 
 ## Steps
 
-1. **Read the user's delegation preferences** — their instructions (CLAUDE.md), plus configured workspace preferences via `bun ${CLAUDE_PLUGIN_ROOT}/src/cli/main.ts config --json` (proximate wins: instructions beat config).
+1. **Read the user's delegation preferences** — their instructions (CLAUDE.md), plus configured workspace preferences via `bun ${CLAUDE_PLUGIN_ROOT}/dist/gh-conductor.js config --json` (proximate wins: instructions beat config).
 2. **Questions go to whoever's call it is** — default: the person who requested the work; override when the answer belongs to someone else (compliance, management).
 3. **Respect occupancy signals** — another assignee or a linked branch means taken: ask before touching. Assignee is guidance, never a hard block on the ready computation.

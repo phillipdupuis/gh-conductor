@@ -1,0 +1,241 @@
+// Mock issue tree for stress-testing the renderers: "Upgrade Python version" at a fictional data-pipeline
+// SaaS (core infra + 10 customers), captured at three moments. Nothing here is real except the
+// viewer's login; links go nowhere. `bun run fixtures` writes the JSON files next to this module.
+
+import type { Blocker, Graph, IssueState, Issue, Pr } from "../src/core/schema.ts";
+
+export type Stage = "early" | "mid" | "late";
+export const STAGES: Stage[] = ["early", "mid", "late"];
+
+const REPO = "northbeam/platform";
+const VIEWER = "phillipdupuis";
+const ROOT = 120;
+/** Devops-sprint issue in another repo: the upgrade switches pip → uv, so no code starts until it ships. */
+const UV = 57;
+const UV_REPO = "northbeam/devops";
+/** Downstream of the whole tree: nothing in the tree waits on it, it waits on the last tree node. */
+const DOCS = 145;
+
+const repoOf = (n: number): string => (n === UV ? UV_REPO : REPO);
+const key = (n: number): string => `${repoOf(n)}#${n}`;
+
+const CUSTOMERS = [
+  "Halcyon Freight",
+  "Bluefin Grocers",
+  "Orrin Health",
+  "Tidewater Energy",
+  "Kestrel Media",
+  "Marlowe Insurance",
+  "Sable Logistics",
+  "Pinecrest Retail",
+  "Vantage Telecom",
+  "Lumen Labs",
+];
+
+type Spec = { number: number; title: string; parent: number; blockedBy?: number[] };
+
+const SPECS: Spec[] = [
+  { number: 121, title: "Target versions", parent: ROOT },
+  { number: 122, title: "Decide: Python target version", parent: 121 },
+  {
+    number: 123,
+    title: "Audit dependencies for compatibility with the target",
+    parent: 121,
+    blockedBy: [122],
+  },
+  {
+    number: 124,
+    title: "Decide: dependency target versions (pandas, numpy, SQLAlchemy, pyarrow)",
+    parent: 121,
+    blockedBy: [123],
+  },
+  { number: 125, title: "Risk & regression plan", parent: ROOT },
+  { number: 126, title: "Enumerate breaking changes and risks", parent: 125, blockedBy: [121] },
+  { number: 127, title: "Regression test plan: core infra", parent: 125, blockedBy: [126] },
+  { number: 128, title: "Regression test plan: customer code", parent: 125, blockedBy: [126] },
+  {
+    number: 129,
+    title: "Upgrade core infra to target versions",
+    parent: ROOT,
+    blockedBy: [125, UV],
+  },
+  { number: 130, title: "Customer migrations", parent: ROOT },
+  ...CUSTOMERS.map((c, i) => ({
+    number: 131 + i,
+    title: `Migrate ${c} to target versions`,
+    parent: 130,
+    blockedBy: [129],
+  })),
+  {
+    number: 141,
+    title: "Retire old Python runtime (base images, CI matrix, compat shims)",
+    parent: ROOT,
+    blockedBy: [130],
+  },
+];
+
+/** Reached from the tree by one blocked-by hop, in either direction; neither is a sub-issue of the root. */
+const RELATED: { number: number; blockedBy?: number[] }[] = [
+  { number: UV },
+  { number: DOCS, blockedBy: [141] },
+];
+
+const TITLES: Record<number, string> = {
+  [ROOT]: "Upgrade Python version",
+  [UV]: "Add uv to platform",
+  [DOCS]: "Update public docs for the new Python",
+  ...Object.fromEntries(SPECS.map((s) => [s.number, s.title])),
+};
+
+/**
+ * Bodies as GitHub's `bodyHTML` renders them — task lists, code blocks, user mentions and issue
+ * links — so the panel is exercised against real markup. Anything not listed has no body.
+ */
+const BODIES: Record<number, string> = {
+  [ROOT]: `<p dir="auto">Our runtime is two minor versions behind, and the pinned data stack is what keeps it there. This epic tracks the whole upgrade: agree the targets, plan the regressions, move core infra, then the customer pipelines.</p>
+<ul class="contains-task-list">
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled checked> Agree the target Python and dependency versions</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> Land core infra on the new versions</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> Migrate all ten customer pipelines</li>
+</ul>
+<p dir="auto">Nothing starts until <a class="issue-link" href="https://github.com/${UV_REPO}/issues/${UV}">${UV_REPO}#${UV}</a> ships. <a class="user-mention" href="https://github.com/octocat">@octocat</a> owns the rollout window.</p>`,
+  123: `<p dir="auto">Walk every pinned dependency and record whether it supports the target interpreter. Resolve first, read the failures second:</p>
+<pre><code>uv pip compile requirements.in --python 3.13
+</code></pre>
+<ul class="contains-task-list">
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled checked> pandas, numpy, pyarrow</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> SQLAlchemy and the two internal forks</li>
+</ul>
+<p dir="auto">Findings land in the table on <a class="issue-link" href="https://github.com/${REPO}/issues/124">#124</a>.</p>`,
+  [UV]: `<p dir="auto">Replace pip and pip-tools with <code>uv</code> across the platform images and CI. Lockfiles move to <code>uv.lock</code>; the old <code>requirements.txt</code> stays generated until every consumer is off it.</p>
+<pre><code>uv sync --frozen
+</code></pre>
+<p dir="auto">Asked for by the Python upgrade epic — see <a class="issue-link" href="https://github.com/${REPO}/issues/${ROOT}">${REPO}#${ROOT}</a>.</p>`,
+};
+
+/** Per-issue state at each stage. Anything not listed is open, unassigned, no PR. */
+type Status = { state?: IssueState; assignees?: string[]; pr?: Pr };
+const me = { assignees: [VIEWER] };
+const done = { state: "closed" as const };
+const pr = (number: number, state: Pr["state"]): Pr => ({
+  number,
+  url: `https://github.com/${REPO}/pull/${number}`,
+  state,
+});
+const merged = (n: number) => ({ ...done, pr: pr(n, "merged") });
+
+const STATUS: Record<Stage, Record<number, Status>> = {
+  early: {
+    122: { ...done, ...me },
+    123: { pr: pr(310, "draft") },
+    124: me,
+  },
+  mid: {
+    [UV]: done,
+    121: done,
+    122: { ...done, ...me },
+    123: merged(310),
+    124: { ...done, ...me },
+    125: done,
+    126: done,
+    127: merged(322),
+    128: merged(323),
+    129: { pr: pr(340, "review") },
+  },
+  late: {
+    [UV]: done,
+    121: done,
+    122: { ...done, ...me },
+    123: merged(310),
+    124: { ...done, ...me },
+    125: done,
+    126: done,
+    127: merged(322),
+    128: merged(323),
+    129: merged(340),
+    131: merged(351),
+    132: merged(352),
+    133: merged(353),
+    134: { pr: pr(354, "draft") },
+    135: { pr: pr(355, "draft") },
+    136: { pr: pr(356, "review") },
+    137: me,
+  },
+};
+
+/** Fixed, spread-out timestamps so the sidebar shows a mix of ages; the stage shifts them so later stages look more recent. */
+const STAGE_DAY: Record<Stage, number> = { early: 3, mid: 12, late: 24 };
+const updatedAt = (number: number, stage: Stage): string => {
+  const day = STAGE_DAY[stage] - ((number * 7) % 5);
+  return new Date(Date.UTC(2026, 7, 1 + day, (number * 13) % 24, (number * 29) % 60)).toISOString();
+};
+
+export function upgradePython(stage: Stage): Graph {
+  const status = STATUS[stage];
+  const stateOf = (n: number): IssueState => status[n]?.state ?? "open";
+  const url = (n: number) => `https://github.com/${repoOf(n)}/issues/${n}`;
+  const blocker = (n: number): Blocker => ({
+    repo: repoOf(n),
+    number: n,
+    title: TITLES[n]!,
+    url: url(n),
+    state: stateOf(n),
+  });
+  const depth = (s: Spec): number => (s.parent === ROOT ? 1 : 2);
+  const node = (s: Spec): Issue => ({
+    repo: REPO,
+    number: s.number,
+    title: s.title,
+    bodyHtml: BODIES[s.number] ?? "",
+    url: url(s.number),
+    state: stateOf(s.number),
+    assignees: status[s.number]?.assignees ?? [],
+    blockedBy: (s.blockedBy ?? []).map(blocker),
+    pr: status[s.number]?.pr ?? null,
+    parent: key(s.parent),
+    depth: depth(s),
+    updatedAt: updatedAt(s.number, stage),
+  });
+  const related = (r: (typeof RELATED)[number]): Issue => ({
+    repo: repoOf(r.number),
+    number: r.number,
+    title: TITLES[r.number]!,
+    bodyHtml: BODIES[r.number] ?? "",
+    url: url(r.number),
+    state: stateOf(r.number),
+    assignees: status[r.number]?.assignees ?? [],
+    blockedBy: (r.blockedBy ?? []).map(blocker),
+    pr: status[r.number]?.pr ?? null,
+    parent: null,
+    depth: 0,
+    updatedAt: updatedAt(r.number, stage),
+  });
+  // Depth-first in sub-issue order, as loadGraph would return it.
+  const byParent = new Map<number, Spec[]>();
+  for (const s of SPECS) byParent.set(s.parent, [...(byParent.get(s.parent) ?? []), s]);
+  const walk = (parent: number): Issue[] =>
+    (byParent.get(parent) ?? []).flatMap((s) => [node(s), ...walk(s.number)]);
+  return {
+    repo: REPO,
+    viewer: VIEWER,
+    root: {
+      repo: REPO,
+      number: ROOT,
+      title: TITLES[ROOT]!,
+      bodyHtml: BODIES[ROOT] ?? "",
+      url: url(ROOT),
+      state: "open",
+      assignees: [],
+      blockedBy: [],
+      pr: null,
+      parent: null,
+      depth: 0,
+      updatedAt: updatedAt(ROOT, stage),
+    },
+    nodes: walk(ROOT),
+    related: [...RELATED].sort((a, b) => key(a.number).localeCompare(key(b.number))).map(related),
+  };
+}
+
+export const fixturePath = (stage: Stage): string =>
+  `${import.meta.dir}/upgrade-python-${stage}.json`;

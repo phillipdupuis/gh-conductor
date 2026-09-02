@@ -1,0 +1,499 @@
+{
+  "repo": "northbeam/platform",
+  "viewer": "phillipdupuis",
+  "root": {
+    "repo": "northbeam/platform",
+    "number": 120,
+    "title": "Upgrade Python version",
+    "bodyHtml": "<p dir=\"auto\">Our runtime is two minor versions behind, and the pinned data stack is what keeps it there. This epic tracks the whole upgrade: agree the targets, plan the regressions, move core infra, then the customer pipelines.</p>\n<ul class=\"contains-task-list\">\n<li class=\"task-list-item\"><input type=\"checkbox\" class=\"task-list-item-checkbox\" disabled checked> Agree the target Python and dependency versions</li>\n<li class=\"task-list-item\"><input type=\"checkbox\" class=\"task-list-item-checkbox\" disabled> Land core infra on the new versions</li>\n<li class=\"task-list-item\"><input type=\"checkbox\" class=\"task-list-item-checkbox\" disabled> Migrate all ten customer pipelines</li>\n</ul>\n<p dir=\"auto\">Nothing starts until <a class=\"issue-link\" href=\"https://github.com/northbeam/devops/issues/57\">northbeam/devops#57</a> ships. <a class=\"user-mention\" href=\"https://github.com/octocat\">@octocat</a> owns the rollout window.</p>",
+    "url": "https://github.com/northbeam/platform/issues/120",
+    "state": "open",
+    "assignees": [],
+    "blockedBy": [],
+    "pr": null,
+    "parent": null,
+    "depth": 0,
+    "updatedAt": "2026-08-04T00:00:00.000Z"
+  },
+  "nodes": [
+    {
+      "repo": "northbeam/platform",
+      "number": 121,
+      "title": "Target versions",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/121",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [],
+      "pr": null,
+      "parent": "northbeam/platform#120",
+      "depth": 1,
+      "updatedAt": "2026-08-02T13:29:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 122,
+      "title": "Decide: Python target version",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/122",
+      "state": "closed",
+      "assignees": ["phillipdupuis"],
+      "blockedBy": [],
+      "pr": null,
+      "parent": "northbeam/platform#121",
+      "depth": 2,
+      "updatedAt": "2026-07-31T02:58:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 123,
+      "title": "Audit dependencies for compatibility with the target",
+      "bodyHtml": "<p dir=\"auto\">Walk every pinned dependency and record whether it supports the target interpreter. Resolve first, read the failures second:</p>\n<pre><code>uv pip compile requirements.in --python 3.13\n</code></pre>\n<ul class=\"contains-task-list\">\n<li class=\"task-list-item\"><input type=\"checkbox\" class=\"task-list-item-checkbox\" disabled checked> pandas, numpy, pyarrow</li>\n<li class=\"task-list-item\"><input type=\"checkbox\" class=\"task-list-item-checkbox\" disabled> SQLAlchemy and the two internal forks</li>\n</ul>\n<p dir=\"auto\">Findings land in the table on <a class=\"issue-link\" href=\"https://github.com/northbeam/platform/issues/124\">#124</a>.</p>",
+      "url": "https://github.com/northbeam/platform/issues/123",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 122,
+          "title": "Decide: Python target version",
+          "url": "https://github.com/northbeam/platform/issues/122",
+          "state": "closed"
+        }
+      ],
+      "pr": {
+        "number": 310,
+        "url": "https://github.com/northbeam/platform/pull/310",
+        "state": "draft"
+      },
+      "parent": "northbeam/platform#121",
+      "depth": 2,
+      "updatedAt": "2026-08-03T15:27:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 124,
+      "title": "Decide: dependency target versions (pandas, numpy, SQLAlchemy, pyarrow)",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/124",
+      "state": "open",
+      "assignees": ["phillipdupuis"],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 123,
+          "title": "Audit dependencies for compatibility with the target",
+          "url": "https://github.com/northbeam/platform/issues/123",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": "northbeam/platform#121",
+      "depth": 2,
+      "updatedAt": "2026-08-01T04:56:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 125,
+      "title": "Risk & regression plan",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/125",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [],
+      "pr": null,
+      "parent": "northbeam/platform#120",
+      "depth": 1,
+      "updatedAt": "2026-08-04T17:25:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 126,
+      "title": "Enumerate breaking changes and risks",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/126",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 121,
+          "title": "Target versions",
+          "url": "https://github.com/northbeam/platform/issues/121",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": "northbeam/platform#125",
+      "depth": 2,
+      "updatedAt": "2026-08-02T06:54:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 127,
+      "title": "Regression test plan: core infra",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/127",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 126,
+          "title": "Enumerate breaking changes and risks",
+          "url": "https://github.com/northbeam/platform/issues/126",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": "northbeam/platform#125",
+      "depth": 2,
+      "updatedAt": "2026-07-31T19:23:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 128,
+      "title": "Regression test plan: customer code",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/128",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 126,
+          "title": "Enumerate breaking changes and risks",
+          "url": "https://github.com/northbeam/platform/issues/126",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": "northbeam/platform#125",
+      "depth": 2,
+      "updatedAt": "2026-08-03T08:52:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 129,
+      "title": "Upgrade core infra to target versions",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/129",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 125,
+          "title": "Risk & regression plan",
+          "url": "https://github.com/northbeam/platform/issues/125",
+          "state": "open"
+        },
+        {
+          "repo": "northbeam/devops",
+          "number": 57,
+          "title": "Add uv to platform",
+          "url": "https://github.com/northbeam/devops/issues/57",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": "northbeam/platform#120",
+      "depth": 1,
+      "updatedAt": "2026-08-01T21:21:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 130,
+      "title": "Customer migrations",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/130",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [],
+      "pr": null,
+      "parent": "northbeam/platform#120",
+      "depth": 1,
+      "updatedAt": "2026-08-04T10:50:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 131,
+      "title": "Migrate Halcyon Freight to target versions",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/131",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 129,
+          "title": "Upgrade core infra to target versions",
+          "url": "https://github.com/northbeam/platform/issues/129",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": "northbeam/platform#130",
+      "depth": 2,
+      "updatedAt": "2026-08-02T23:19:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 132,
+      "title": "Migrate Bluefin Grocers to target versions",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/132",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 129,
+          "title": "Upgrade core infra to target versions",
+          "url": "https://github.com/northbeam/platform/issues/129",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": "northbeam/platform#130",
+      "depth": 2,
+      "updatedAt": "2026-07-31T12:48:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 133,
+      "title": "Migrate Orrin Health to target versions",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/133",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 129,
+          "title": "Upgrade core infra to target versions",
+          "url": "https://github.com/northbeam/platform/issues/129",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": "northbeam/platform#130",
+      "depth": 2,
+      "updatedAt": "2026-08-03T01:17:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 134,
+      "title": "Migrate Tidewater Energy to target versions",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/134",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 129,
+          "title": "Upgrade core infra to target versions",
+          "url": "https://github.com/northbeam/platform/issues/129",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": "northbeam/platform#130",
+      "depth": 2,
+      "updatedAt": "2026-08-01T14:46:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 135,
+      "title": "Migrate Kestrel Media to target versions",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/135",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 129,
+          "title": "Upgrade core infra to target versions",
+          "url": "https://github.com/northbeam/platform/issues/129",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": "northbeam/platform#130",
+      "depth": 2,
+      "updatedAt": "2026-08-04T03:15:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 136,
+      "title": "Migrate Marlowe Insurance to target versions",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/136",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 129,
+          "title": "Upgrade core infra to target versions",
+          "url": "https://github.com/northbeam/platform/issues/129",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": "northbeam/platform#130",
+      "depth": 2,
+      "updatedAt": "2026-08-02T16:44:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 137,
+      "title": "Migrate Sable Logistics to target versions",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/137",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 129,
+          "title": "Upgrade core infra to target versions",
+          "url": "https://github.com/northbeam/platform/issues/129",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": "northbeam/platform#130",
+      "depth": 2,
+      "updatedAt": "2026-07-31T05:13:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 138,
+      "title": "Migrate Pinecrest Retail to target versions",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/138",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 129,
+          "title": "Upgrade core infra to target versions",
+          "url": "https://github.com/northbeam/platform/issues/129",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": "northbeam/platform#130",
+      "depth": 2,
+      "updatedAt": "2026-08-03T18:42:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 139,
+      "title": "Migrate Vantage Telecom to target versions",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/139",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 129,
+          "title": "Upgrade core infra to target versions",
+          "url": "https://github.com/northbeam/platform/issues/129",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": "northbeam/platform#130",
+      "depth": 2,
+      "updatedAt": "2026-08-01T07:11:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 140,
+      "title": "Migrate Lumen Labs to target versions",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/140",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 129,
+          "title": "Upgrade core infra to target versions",
+          "url": "https://github.com/northbeam/platform/issues/129",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": "northbeam/platform#130",
+      "depth": 2,
+      "updatedAt": "2026-08-04T20:40:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 141,
+      "title": "Retire old Python runtime (base images, CI matrix, compat shims)",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/141",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 130,
+          "title": "Customer migrations",
+          "url": "https://github.com/northbeam/platform/issues/130",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": "northbeam/platform#120",
+      "depth": 1,
+      "updatedAt": "2026-08-02T09:09:00.000Z"
+    }
+  ],
+  "related": [
+    {
+      "repo": "northbeam/devops",
+      "number": 57,
+      "title": "Add uv to platform",
+      "bodyHtml": "<p dir=\"auto\">Replace pip and pip-tools with <code>uv</code> across the platform images and CI. Lockfiles move to <code>uv.lock</code>; the old <code>requirements.txt</code> stays generated until every consumer is off it.</p>\n<pre><code>uv sync --frozen\n</code></pre>\n<p dir=\"auto\">Asked for by the Python upgrade epic — see <a class=\"issue-link\" href=\"https://github.com/northbeam/platform/issues/120\">northbeam/platform#120</a>.</p>",
+      "url": "https://github.com/northbeam/devops/issues/57",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [],
+      "pr": null,
+      "parent": null,
+      "depth": 0,
+      "updatedAt": "2026-07-31T21:33:00.000Z"
+    },
+    {
+      "repo": "northbeam/platform",
+      "number": 145,
+      "title": "Update public docs for the new Python",
+      "bodyHtml": "",
+      "url": "https://github.com/northbeam/platform/issues/145",
+      "state": "open",
+      "assignees": [],
+      "blockedBy": [
+        {
+          "repo": "northbeam/platform",
+          "number": 141,
+          "title": "Retire old Python runtime (base images, CI matrix, compat shims)",
+          "url": "https://github.com/northbeam/platform/issues/141",
+          "state": "open"
+        }
+      ],
+      "pr": null,
+      "parent": null,
+      "depth": 0,
+      "updatedAt": "2026-08-04T13:05:00.000Z"
+    }
+  ]
+}

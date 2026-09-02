@@ -13,6 +13,8 @@ A project manager for coding agents, backed by GitHub Issues. Breaks a large fea
 
 See [plugins/gh-conductor](plugins/gh-conductor/) for what the plugin provides and requires.
 
+Contributing: the CLI and graph view are built from [packages/gh-conductor](packages/gh-conductor/).
+
 This marketplace also hosts [gh-conductor-channels](plugins/gh-conductor-channels/), an experimental research preview that pushes issue events into a running Claude Code session.
 
 ## License

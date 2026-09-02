@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>gh-conductor</title>
+    <script>
+      // Deliver ResizeObserver callbacks on the next frame. React Flow resizes what it observes, which
+      // makes browsers report the harmless "ResizeObserver loop completed with undelivered
+      // notifications" — and Bun's dev overlay would show that as a runtime error on every hover.
+      window.ResizeObserver = class extends ResizeObserver {
+        constructor(cb) {
+          super((entries, observer) => requestAnimationFrame(() => cb(entries, observer)));
+        }
+      };
+    </script>
+    
+  <link rel="stylesheet" crossorigin href="./index-6f65f413.css"><script type="module" crossorigin src="./index-g4ee34m6.js"></script></head>
+  <body>
+    <div id="root"></div>
+    
+  </body>
+</html>

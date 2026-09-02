@@ -7,7 +7,7 @@ description: Push ready work forward. Use in any session to pick a graph back up
 
 ## Steps
 
-1. **Read state from GitHub** — the graph, the ready frontier, what's waiting on a human: `bun ${CLAUDE_PLUGIN_ROOT}/src/cli/main.ts status <issue>` (and `graph` / `ready` for detail).
+1. **Read state from GitHub** — the graph, the ready frontier, what's waiting on a human: `bun ${CLAUDE_PLUGIN_ROOT}/dist/gh-conductor.js status <issue>` (and `graph` / `ready` for detail).
 2. **Sweep what changed** — replies to question issues (propose the close, or name the gap and leave open), merged PRs, stale assignments a PM would nudge.
 3. **Pick one ready issue** — in-progress (draft PR) first, then plan order. Read its closed blockers' answers at point of use; an insufficient answer reopens that blocker.
 4. **Work it** — branch, push early, draft PR with a plan checklist, tick as you go. A call you can't make alone → `clarify`. Done-when holds and tests pass → mark the PR ready.
