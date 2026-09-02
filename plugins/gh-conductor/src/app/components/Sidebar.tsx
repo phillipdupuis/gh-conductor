@@ -62,7 +62,7 @@ export function Sidebar({ graph, categories, traced, onHover, onSelect }: Props)
   }
 
   return (
-    <aside className="w-80 shrink-0 overflow-y-auto border-r bg-card text-sm">
+    <aside id="sidebar" className="w-80 shrink-0 overflow-y-auto border-r bg-card text-sm">
       {SECTIONS.map((s) => {
         const items = groups.get(s.key)!;
         if (!items.length) return null;

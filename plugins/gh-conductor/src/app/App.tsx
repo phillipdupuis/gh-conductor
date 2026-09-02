@@ -18,6 +18,7 @@ export function App() {
   const hover = useAppStore((s) => s.hover);
   const selected = useAppStore((s) => s.selected);
   const expanded = useAppStore((s) => s.expanded);
+  const sidebarOpen = useAppStore((s) => s.sidebarOpen);
   const view = useAppStore(currentView);
 
   const refresh = useAppStore((s) => s.refresh);
@@ -27,6 +28,7 @@ export function App() {
   const collapse = useAppStore((s) => s.collapse);
   const expandAll = useAppStore((s) => s.expandAll);
   const collapseAll = useAppStore((s) => s.collapseAll);
+  const toggleSidebar = useAppStore((s) => s.toggleSidebar);
 
   useEffect(() => {
     if (view) document.title = `#${view.graph.root.number} ${view.graph.root.title} · gh-conductor`;
@@ -79,22 +81,26 @@ export function App() {
         view={view}
         layers={layers}
         expanded={expanded}
+        sidebarOpen={sidebarOpen}
         loading={load.status === "loading"}
         error={load.status === "error" ? load.message : null}
         onRefresh={refresh}
         onExpandAll={expandAll}
         onCollapseAll={collapseAll}
+        onToggleSidebar={toggleSidebar}
       />
       <div className="flex min-h-0 flex-1">
         {view && (
           <>
-            <Sidebar
-              graph={view.graph}
-              categories={categories}
-              traced={traced}
-              onHover={setHover}
-              onSelect={setSelected}
-            />
+            {sidebarOpen && (
+              <Sidebar
+                graph={view.graph}
+                categories={categories}
+                traced={traced}
+                onHover={setHover}
+                onSelect={setSelected}
+              />
+            )}
             {layout ? (
               <GraphCanvas
                 graph={view.graph}

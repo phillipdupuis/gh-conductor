@@ -1,4 +1,11 @@
-import { ExternalLink, FoldHorizontal, RefreshCw, UnfoldHorizontal } from "lucide-react";
+import {
+  ExternalLink,
+  FoldHorizontal,
+  PanelLeftClose,
+  PanelLeftOpen,
+  RefreshCw,
+  UnfoldHorizontal,
+} from "lucide-react";
 import type { IssuePath } from "../api.ts";
 import { relativeTime } from "../../core/graph.ts";
 import { isCollapsible } from "../../core/layout.ts";
@@ -11,11 +18,13 @@ type Props = {
   view: ViewModel | null;
   layers: string[][] | null;
   expanded: ReadonlySet<number>;
+  sidebarOpen: boolean;
   loading: boolean;
   error: string | null;
   onRefresh: () => void;
   onExpandAll: () => void;
   onCollapseAll: () => void;
+  onToggleSidebar: () => void;
 };
 
 export function Header({
@@ -23,11 +32,13 @@ export function Header({
   view,
   layers,
   expanded,
+  sidebarOpen,
   loading,
   error,
   onRefresh,
   onExpandAll,
   onCollapseAll,
+  onToggleSidebar,
 }: Props) {
   const collapsible = (layers ?? []).flatMap((l, i) => (isCollapsible(l) ? [i] : []));
   const allExpanded = collapsible.every((i) => expanded.has(i));
@@ -35,6 +46,16 @@ export function Header({
 
   return (
     <header className="flex items-center gap-4 border-b bg-card px-4 py-2">
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={onToggleSidebar}
+        aria-expanded={sidebarOpen}
+        aria-controls="sidebar"
+        aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+      >
+        {sidebarOpen ? <PanelLeftClose /> : <PanelLeftOpen />}
+      </Button>
       <div className="min-w-0 flex-1">
         <h1 className="truncate text-base font-semibold">
           {view ? (

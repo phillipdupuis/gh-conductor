@@ -36,6 +36,16 @@ describe("expanded", () => {
   });
 });
 
+describe("sidebarOpen", () => {
+  test("starts open and toggles", () => {
+    expect(store().sidebarOpen).toBe(true);
+    store().toggleSidebar();
+    expect(store().sidebarOpen).toBe(false);
+    store().toggleSidebar();
+    expect(store().sidebarOpen).toBe(true);
+  });
+});
+
 describe("expandAll", () => {
   test("expands exactly the collapsible layers of the current view", () => {
     store().receiveView(view);

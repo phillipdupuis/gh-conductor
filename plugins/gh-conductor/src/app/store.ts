@@ -19,6 +19,8 @@ type State = {
   selected: string | null;
   /** Layer indices shown as columns instead of one list node. Survives Refresh. */
   expanded: ReadonlySet<number>;
+  /** The issue list on the left. Remembered across page loads. */
+  sidebarOpen: boolean;
 };
 
 type Actions = {
@@ -31,6 +33,7 @@ type Actions = {
   collapse: (i: number) => void;
   expandAll: () => void;
   collapseAll: () => void;
+  toggleSidebar: () => void;
 };
 
 export type AppState = State & Actions;
@@ -41,7 +44,27 @@ export const initialState: State = {
   hover: null,
   selected: null,
   expanded: new Set(),
+  sidebarOpen: true,
 };
+
+const SIDEBAR_KEY = "gh-conductor.sidebarOpen";
+
+/** Tests run without a window; a missing localStorage just means nothing persists. */
+function readSidebarOpen(): boolean {
+  try {
+    return localStorage.getItem(SIDEBAR_KEY) !== "false";
+  } catch {
+    return initialState.sidebarOpen;
+  }
+}
+
+function writeSidebarOpen(open: boolean): void {
+  try {
+    localStorage.setItem(SIDEBAR_KEY, String(open));
+  } catch {
+    // Not persisted.
+  }
+}
 
 /** The graph on screen: the loaded one, or the one it is replacing. Never allocates — safe as a selector. */
 export function currentView(s: State): ViewModel | null {
@@ -54,6 +77,7 @@ export function currentView(s: State): ViewModel | null {
 
 export const useAppStore = create<AppState>()((set, get) => ({
   ...initialState,
+  sidebarOpen: readSidebarOpen(),
 
   init: (issue) => set({ issue }),
 
@@ -99,4 +123,11 @@ export const useAppStore = create<AppState>()((set, get) => ({
     set({ expanded: new Set(layers.flatMap((l, i) => (isCollapsible(l) ? [i] : []))) });
   },
   collapseAll: () => set({ expanded: new Set() }),
+
+  toggleSidebar: () =>
+    set((s) => {
+      const sidebarOpen = !s.sidebarOpen;
+      writeSidebarOpen(sidebarOpen);
+      return { sidebarOpen };
+    }),
 }));

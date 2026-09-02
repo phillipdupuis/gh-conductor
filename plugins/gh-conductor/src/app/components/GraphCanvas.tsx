@@ -9,7 +9,7 @@ import {
   type NodeTypes,
   type ReactFlowInstance,
 } from "@xyflow/react";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { keyOf } from "../../core/graph.ts";
 import { boundsOf, layerId, type Box, type Layout } from "../../core/layout.ts";
 import type { Category, Graph, Issue } from "../../core/schema.ts";
@@ -112,6 +112,7 @@ export function GraphCanvas({
   onCollapse,
 }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
+  const instance = useRef<ReactFlowInstance<FlowNode, Edge> | null>(null);
   const issues = useMemo(
     () =>
       new Map<string, Issue>(
@@ -119,6 +120,26 @@ export function GraphCanvas({
       ),
     [graph],
   );
+
+  // The viewport is relative to the pane's left edge. When the sidebar hides or shows, that edge
+  // moves; shift the viewport by the same amount so the graph stays put on screen and the space
+  // the sidebar freed reveals more of the graph's left side. Window resizes leave the edge alone.
+  useEffect(() => {
+    const el = wrap.current;
+    if (!el) return;
+    let left = el.getBoundingClientRect().left;
+    const observer = new ResizeObserver(() => {
+      const next = el.getBoundingClientRect().left;
+      const delta = left - next;
+      left = next;
+      const inst = instance.current;
+      if (!delta || !inst) return;
+      const v = inst.getViewport();
+      inst.setViewport({ ...v, x: v.x + delta });
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const nodes = useMemo<FlowNode[]>(() => {
     const out: FlowNode[] = [];
@@ -226,9 +247,10 @@ export function GraphCanvas({
         nodeTypes={nodeTypes}
         colorMode="dark"
         // Fires once per mount, so Refresh and expand/collapse leave the viewport where the user put it.
-        onInit={(instance: ReactFlowInstance<FlowNode, Edge>) =>
-          instance.setViewport(initialViewport(wrap.current?.clientWidth ?? 0, layout))
-        }
+        onInit={(inst: ReactFlowInstance<FlowNode, Edge>) => {
+          instance.current = inst;
+          inst.setViewport(initialViewport(wrap.current?.clientWidth ?? 0, layout));
+        }}
         // Figma's input model: scroll pans (a trackpad's two fingers), pinch and Meta/Ctrl+scroll zoom.
         panOnScroll
         zoomOnScroll={false}
