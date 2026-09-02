@@ -1,6 +1,6 @@
 {
   "name": "gh-conductor",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Breaks a large feature into GitHub Issues, wires them as a DAG with sub-issues and blocked-by dependencies, and keeps agents and humans pointed at the next ready step.",
   "author": {
     "name": "Phillip Dupuis",

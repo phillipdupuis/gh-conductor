@@ -22,6 +22,9 @@ const result = await Bun.build({
   target: "bun",
   outdir: OUT,
   minify: true,
+  // Absolute asset URLs: the app is served at nested routes (/owner/repo/N), where relative
+  // "./index-*.js" would resolve to /owner/repo/index-*.js and hit the page route instead.
+  publicPath: "/",
   plugins: [tailwind],
   naming: {
     entry: "gh-conductor.[ext]",

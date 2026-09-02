@@ -1,6 +1,6 @@
 {
   "name": "gh-conductor",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Read-only graph/ready/status commands plus a locally served graph view for gh-conductor. Requires bun and gh >= 2.94.",
   "bin": {
